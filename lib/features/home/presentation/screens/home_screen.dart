@@ -24,6 +24,15 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<DashboardBloc>().add(const DashboardRequested());
   }
 
+  void _showComingSoon(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Segera hadir'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
   Future<void> _refresh() async {
     context.read<DashboardBloc>().add(const DashboardRequested());
   }
@@ -136,21 +145,26 @@ class _HomeScreenState extends State<HomeScreen> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             children: [
-                              const FeatureGridItem(
+                              FeatureGridItem(
                                 icon: Icons.badge_outlined,
                                 label: 'KTA',
+                                onTap: () => context.push('/kta'),
                               ),
-                              const FeatureGridItem(
+                              FeatureGridItem(
                                 icon: Icons.receipt_long_outlined,
                                 label: 'Iuran',
+                                onTap: () => _showComingSoon(context),
                               ),
-                              const FeatureGridItem(
+                              FeatureGridItem(
                                 icon: Icons.forum_outlined,
                                 label: 'Aspirasi',
+                                onTap: () =>
+                                    context.push(AppRoutes.aspirations),
                               ),
-                              const FeatureGridItem(
+                              FeatureGridItem(
                                 icon: Icons.mail_outline_rounded,
                                 label: 'Surat',
+                                onTap: () => context.push(AppRoutes.letters),
                               ),
                               FeatureGridItem(
                                 icon: Icons.campaign_outlined,
@@ -158,17 +172,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onTap: () =>
                                     context.push(AppRoutes.announcements),
                               ),
-                              const FeatureGridItem(
+                              FeatureGridItem(
                                 icon: Icons.account_balance_wallet_outlined,
                                 label: 'Keuangan',
+                                onTap: () => _showComingSoon(context),
                               ),
-                              const FeatureGridItem(
+                              FeatureGridItem(
                                 icon: Icons.article_outlined,
                                 label: 'News',
+                                onTap: () => context.push(AppRoutes.news),
                               ),
-                              const FeatureGridItem(
+                              FeatureGridItem(
                                 icon: Icons.apps_rounded,
                                 label: 'Lainnya',
+                                onTap: () => context.push(AppRoutes.feedback),
                               ),
                             ],
                           ),

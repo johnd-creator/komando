@@ -86,10 +86,12 @@ class _NewsListScreenState extends State<NewsListScreen> {
                   margin: const EdgeInsets.only(bottom: 12),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
-                    onTap: () {
-                      if (item.link.isNotEmpty) {
-                        launchUrl(Uri.parse(item.link),
-                            mode: LaunchMode.externalApplication);
+                    onTap: () async {
+                      if (item.link.isEmpty) return;
+                      final uri = Uri.parse(item.link);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri,
+                            mode: LaunchMode.platformDefault);
                       }
                     },
                     child: Column(

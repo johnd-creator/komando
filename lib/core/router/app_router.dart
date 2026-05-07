@@ -13,6 +13,7 @@ import '../../features/aspirations/presentation/bloc/aspiration_bloc.dart';
 import '../../features/aspirations/presentation/screens/aspiration_create_screen.dart';
 import '../../features/aspirations/presentation/screens/aspiration_detail_screen.dart';
 import '../../features/aspirations/presentation/screens/aspiration_list_screen.dart';
+import '../../features/kta/presentation/screens/kta_digital_screen.dart';
 import '../../features/letters/data/repositories/letter_repository.dart';
 import '../../features/letters/presentation/bloc/letter_bloc.dart';
 import '../../features/letters/presentation/screens/letter_create_screen.dart';
@@ -69,6 +70,10 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.home,
         builder: (context, state) => const MainShell(),
+      ),
+      GoRoute(
+        path: '/kta',
+        builder: (context, state) => const KtaDigitalScreen(),
       ),
       GoRoute(
         path: AppRoutes.announcements,
