@@ -8,6 +8,22 @@ import '../../features/announcements/data/repositories/announcement_repository.d
 import '../../features/announcements/presentation/bloc/announcement_bloc.dart';
 import '../../features/announcements/presentation/screens/announcement_detail_screen.dart';
 import '../../features/announcements/presentation/screens/announcement_list_screen.dart';
+import '../../features/aspirations/data/repositories/aspiration_repository.dart';
+import '../../features/aspirations/presentation/bloc/aspiration_bloc.dart';
+import '../../features/aspirations/presentation/screens/aspiration_create_screen.dart';
+import '../../features/aspirations/presentation/screens/aspiration_detail_screen.dart';
+import '../../features/aspirations/presentation/screens/aspiration_list_screen.dart';
+import '../../features/letters/data/repositories/letter_repository.dart';
+import '../../features/letters/presentation/bloc/letter_bloc.dart';
+import '../../features/letters/presentation/screens/letter_create_screen.dart';
+import '../../features/letters/presentation/screens/letter_detail_screen.dart';
+import '../../features/letters/presentation/screens/letter_list_screen.dart';
+import '../../features/feedback/data/repositories/feedback_repository.dart';
+import '../../features/feedback/presentation/bloc/feedback_bloc.dart';
+import '../../features/feedback/presentation/screens/feedback_screen.dart';
+import '../../features/news/data/repositories/news_repository.dart';
+import '../../features/news/presentation/bloc/news_bloc.dart';
+import '../../features/news/presentation/screens/news_list_screen.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_event.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
@@ -20,11 +36,23 @@ class AppRouter {
   AppRouter({
     required AuthBloc authBloc,
     required AnnouncementRepository announcementRepository,
+    required AspirationRepository aspirationRepository,
+    required LetterRepository letterRepository,
+    required FeedbackRepository feedbackRepository,
+    required NewsRepository newsRepository,
   }) : _authBloc = authBloc,
-       _announcementRepository = announcementRepository;
+       _announcementRepository = announcementRepository,
+       _aspirationRepository = aspirationRepository,
+       _letterRepository = letterRepository,
+       _feedbackRepository = feedbackRepository,
+       _newsRepository = newsRepository;
 
   final AuthBloc _authBloc;
   final AnnouncementRepository _announcementRepository;
+  final AspirationRepository _aspirationRepository;
+  final LetterRepository _letterRepository;
+  final FeedbackRepository _feedbackRepository;
+  final NewsRepository _newsRepository;
 
   late final GoRouter router = GoRouter(
     initialLocation: AppRoutes.splash,
@@ -56,6 +84,66 @@ class AppRouter {
           child: AnnouncementDetailScreen(
             id: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
           ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.aspirations,
+        builder: (context, state) => BlocProvider(
+          create: (_) => AspirationBloc(_aspirationRepository),
+          child: const AspirationListScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.aspirationCreate,
+        builder: (context, state) => BlocProvider(
+          create: (_) => AspirationBloc(_aspirationRepository),
+          child: const AspirationCreateScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/aspirations/:id',
+        builder: (context, state) => BlocProvider(
+          create: (_) => AspirationBloc(_aspirationRepository),
+          child: AspirationDetailScreen(
+            id: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.letters,
+        builder: (context, state) => BlocProvider(
+          create: (_) => LetterBloc(_letterRepository),
+          child: const LetterListScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.letterCreate,
+        builder: (context, state) => BlocProvider(
+          create: (_) => LetterBloc(_letterRepository),
+          child: const LetterCreateScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/letters/:id',
+        builder: (context, state) => BlocProvider(
+          create: (_) => LetterBloc(_letterRepository),
+          child: LetterDetailScreen(
+            id: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.feedback,
+        builder: (context, state) => BlocProvider(
+          create: (_) => FeedbackBloc(_feedbackRepository),
+          child: const FeedbackScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.news,
+        builder: (context, state) => BlocProvider(
+          create: (_) => NewsBloc(_newsRepository),
+          child: const NewsListScreen(),
         ),
       ),
     ],

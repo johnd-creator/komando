@@ -6,6 +6,7 @@ import 'core/router/app_router.dart';
 import 'core/security/token_storage.dart';
 import 'core/theme/app_theme.dart';
 import 'features/announcements/data/repositories/announcement_repository.dart';
+import 'features/aspirations/data/repositories/aspiration_repository.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/usecases/login_usecase.dart';
@@ -20,6 +21,10 @@ import 'features/notifications/data/repositories/notification_repository.dart';
 import 'features/notifications/presentation/bloc/notification_bloc.dart';
 import 'features/profile/data/repositories/profile_repository.dart';
 import 'features/profile/presentation/bloc/profile_bloc.dart';
+import 'features/letters/data/repositories/letter_repository.dart';
+import 'features/feedback/data/repositories/feedback_repository.dart';
+import 'features/news/data/repositories/news_repository.dart';
+import 'features/news/data/wordpress_client.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +32,10 @@ void main() {
   final tokenStorage = TokenStorage();
   final apiClient = ApiClient(tokenStorage: tokenStorage);
   final announcementRepository = AnnouncementRepository(apiClient);
+  final aspirationRepository = AspirationRepository(apiClient);
+  final letterRepository = LetterRepository(apiClient);
+  final feedbackRepository = FeedbackRepository(apiClient);
+  final newsRepository = NewsRepository(WordpressClient());
   final authRepository = AuthRepositoryImpl(
     remoteDataSource: AuthRemoteDataSource(apiClient),
     tokenStorage: tokenStorage,
@@ -39,6 +48,10 @@ void main() {
   final appRouter = AppRouter(
     authBloc: authBloc,
     announcementRepository: announcementRepository,
+    aspirationRepository: aspirationRepository,
+    letterRepository: letterRepository,
+    feedbackRepository: feedbackRepository,
+    newsRepository: newsRepository,
   );
 
   runApp(

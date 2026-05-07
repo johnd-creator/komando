@@ -26,10 +26,10 @@ Tracker implementasi per deliverable dari grand_plan.md. Status: `⬜` pending, 
 | # | Deliverable | Status |
 |---|-------------|--------|
 | 1 | Pengumuman (list + detail) | ✅ |
-| 2 | Aspirasi (list + create + detail + support) | ⬜ |
-| 3 | Surat (inbox + outbox + create + detail) | ⬜ |
-| 4 | Feedback | ⬜ |
-| 5 | News/Berita (WordPress public) | ⬜ |
+| 2 | Aspirasi (list + create + detail + support) | ✅ |
+| 3 | Surat (inbox + outbox + create + detail) | ✅ |
+| 4 | Feedback | ✅ |
+| 5 | News/Berita (WordPress public) | ✅ |
 
 ---
 
@@ -41,7 +41,6 @@ Tracker implementasi per deliverable dari grand_plan.md. Status: `⬜` pending, 
 | 2 | Finance dashboard | ⬜ |
 | 3 | Ledger list + filter | ⬜ |
 | 4 | Unit access dropdown | ⬜ |
-| 5 | News/Berita (WordPress public) | ⬜ |
 
 ---
 
