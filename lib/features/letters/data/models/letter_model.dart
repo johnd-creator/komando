@@ -28,11 +28,16 @@ class LetterModel {
   factory LetterModel.fromJson(Map<String, dynamic> json) {
     final category = readMap(json, 'category');
     final creator = readMap(json, 'creator');
-    final unit = readMap(json, 'organization_unit');
+    final unit = readMap(json, 'from_unit').isNotEmpty
+        ? readMap(json, 'from_unit')
+        : readMap(json, 'organization_unit');
 
     return LetterModel(
       id: readInt(json, const ['id']),
-      number: readString(json, const ['letter_number', 'number'], fallback: '-'),
+      number: readString(json, const [
+        'letter_number',
+        'number',
+      ], fallback: '-'),
       subject: readString(json, const ['subject', 'title']),
       body: readString(json, const ['body'], fallback: ''),
       status: readString(json, const ['status'], fallback: 'draft'),
@@ -62,7 +67,9 @@ class LetterPageModel {
 
   factory LetterPageModel.fromJson(Map<String, dynamic> json) {
     final meta = json['meta'] as Map<String, dynamic>? ?? {};
-    final data = readList(json, 'data');
+    final data = readList(json, 'letters').isNotEmpty
+        ? readList(json, 'letters')
+        : readList(json, 'data');
 
     return LetterPageModel(
       items: data.map(LetterModel.fromJson).toList(),
@@ -74,10 +81,7 @@ class LetterPageModel {
 }
 
 class LetterCategoryModel {
-  const LetterCategoryModel({
-    required this.id,
-    required this.name,
-  });
+  const LetterCategoryModel({required this.id, required this.name});
 
   final int id;
   final String name;

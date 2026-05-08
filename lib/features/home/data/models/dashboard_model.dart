@@ -5,6 +5,7 @@ class DashboardModel {
     required this.memberName,
     required this.ktaStatus,
     required this.ktaNumber,
+    required this.unitName,
     required this.unreadNotifications,
     required this.announcements,
   });
@@ -12,6 +13,7 @@ class DashboardModel {
   final String memberName;
   final String ktaStatus;
   final String ktaNumber;
+  final String unitName;
   final int unreadNotifications;
   final List<DashboardAnnouncementModel> announcements;
 
@@ -22,7 +24,6 @@ class DashboardModel {
     final member = readMap(data, 'member').isNotEmpty
         ? readMap(data, 'member')
         : readMap(data, 'profile');
-    final dues = readMap(data, 'dues');
     final kta = readMap(data, 'kta').isNotEmpty
         ? readMap(data, 'kta')
         : readMap(data, 'member_card');
@@ -40,13 +41,14 @@ class DashboardModel {
       ktaStatus: readString(kta, const [
         'status',
         'member_status',
-      ], fallback: readString(dues, const ['status'], fallback: 'Aktif')),
-      ktaNumber: readString(kta, const [
+      ], fallback: readString(member, const ['status'], fallback: 'Aktif')),
+      ktaNumber: readString(kta.isNotEmpty ? kta : member, const [
         'number',
         'kta_number',
         'nomor_anggota',
         'nomor_kta',
       ], fallback: '-'),
+      unitName: readString(member, const ['unit_name'], fallback: '-'),
       unreadNotifications: readInt(
         notification.isNotEmpty ? notification : data,
         const ['unread', 'unread_count', 'unread_notifications'],

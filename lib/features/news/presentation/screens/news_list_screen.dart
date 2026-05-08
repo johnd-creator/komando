@@ -90,8 +90,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                       if (item.link.isEmpty) return;
                       final uri = Uri.parse(item.link);
                       if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri,
-                            mode: LaunchMode.platformDefault);
+                        await launchUrl(uri, mode: LaunchMode.platformDefault);
                       }
                     },
                     child: Column(
@@ -105,10 +104,10 @@ class _NewsListScreenState extends State<NewsListScreen> {
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
-                              height: 180,
-                              color: colorScheme.surfaceContainerHighest,
-                              child: const Icon(Icons.image_not_supported),
-                            ),
+                                  height: 180,
+                                  color: colorScheme.surfaceContainerHighest,
+                                  child: const Icon(Icons.image_not_supported),
+                                ),
                           ),
                         Padding(
                           padding: const EdgeInsets.all(14),
@@ -117,9 +116,8 @@ class _NewsListScreenState extends State<NewsListScreen> {
                             children: [
                               Text(
                                 item.title,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
                               ),
                               const SizedBox(height: 6),
                               Text(

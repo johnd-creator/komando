@@ -35,7 +35,14 @@ class AspirationListLoaded extends AspirationState {
   final String? sort;
 
   @override
-  List<Object?> get props => [items, currentPage, hasMore, category, status, sort];
+  List<Object?> get props => [
+    items,
+    currentPage,
+    hasMore,
+    category,
+    status,
+    sort,
+  ];
 }
 
 class AspirationDetailLoaded extends AspirationState {

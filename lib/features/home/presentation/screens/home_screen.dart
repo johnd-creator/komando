@@ -3,8 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../shared/presentation/widgets/feature_grid_item.dart';
 import '../../../../shared/presentation/widgets/section_title.dart';
+import '../../../../shared/presentation/notifiers/bottom_nav_notifier.dart';
 import '../../data/models/dashboard_model.dart';
 import '../bloc/dashboard_bloc.dart';
 import '../bloc/dashboard_event.dart';
@@ -24,13 +27,68 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<DashboardBloc>().add(const DashboardRequested());
   }
 
-  void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Segera hadir'),
-        duration: Duration(seconds: 1),
+  void _showLainnya(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final hasAdmin =
+        authState is AuthAuthenticated && authState.user.hasAdminAccess;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.feedback_outlined),
+              title: const Text('Feedback'),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push(AppRoutes.feedback);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: const Text('Pengaturan'),
+              enabled: false,
+            ),
+            if (hasAdmin)
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings_outlined),
+                title: const Text('Admin Panel'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.push(AppRoutes.admin);
+                },
+              ),
+          ],
+        ),
       ),
     );
+  }
+
+  void _openKeuangan(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final canAccessFinance =
+        authState is AuthAuthenticated && authState.user.canAccessFinance;
+
+    if (canAccessFinance) {
+      context.push(AppRoutes.keuangan);
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Keuangan organisasi hanya tersedia untuk pengurus atau bendahara.',
+          ),
+          action: SnackBarAction(
+            label: 'Iuran Saya',
+            onPressed: () => context.push(AppRoutes.iuran),
+          ),
+        ),
+      );
   }
 
   Future<void> _refresh() async {
@@ -98,7 +156,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               isLabelVisible:
                                   (dashboard?.unreadNotifications ?? 0) > 0,
                               child: IconButton.filledTonal(
-                                onPressed: () {},
+                                onPressed: () =>
+                                    BottomNavScope.of(context).goToTab(2),
                                 tooltip: 'Notifikasi',
                                 icon: const Icon(Icons.notifications_outlined),
                               ),
@@ -108,17 +167,61 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 20),
                         Card(
                           color: colorScheme.onPrimary,
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.badge_outlined,
-                              color: colorScheme.primary,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () => context.push('/kta'),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.badge_outlined,
+                                    color: colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('KTA'),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          dashboard?.ktaNumber ??
+                                              'Memuat nomor KTA',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleSmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          dashboard?.unitName ??
+                                              'Memuat unit organisasi',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(Icons.chevron_right_rounded),
+                                ],
+                              ),
                             ),
-                            title: const Text('Status KTA'),
-                            subtitle: Text(
-                              '${dashboard?.ktaStatus ?? 'Memuat'} · ${dashboard?.ktaNumber ?? 'Nomor KTA'}',
-                            ),
-                            trailing: const Icon(Icons.chevron_right_rounded),
-                            onTap: () {},
                           ),
                         ),
                       ],
@@ -153,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               FeatureGridItem(
                                 icon: Icons.receipt_long_outlined,
                                 label: 'Iuran',
-                                onTap: () => _showComingSoon(context),
+                                onTap: () => context.push(AppRoutes.iuran),
                               ),
                               FeatureGridItem(
                                 icon: Icons.forum_outlined,
@@ -175,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               FeatureGridItem(
                                 icon: Icons.account_balance_wallet_outlined,
                                 label: 'Keuangan',
-                                onTap: () => _showComingSoon(context),
+                                onTap: () => _openKeuangan(context),
                               ),
                               FeatureGridItem(
                                 icon: Icons.article_outlined,
@@ -185,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               FeatureGridItem(
                                 icon: Icons.apps_rounded,
                                 label: 'Lainnya',
-                                onTap: () => context.push(AppRoutes.feedback),
+                                onTap: () => _showLainnya(context),
                               ),
                             ],
                           ),

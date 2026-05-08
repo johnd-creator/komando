@@ -75,9 +75,9 @@ class _LetterDetailScreenState extends State<LetterDetailScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'No. ${letter.number}',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: colorScheme.outline,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(color: colorScheme.outline),
                 ),
               ],
               const SizedBox(height: 12),
@@ -102,9 +102,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen> {
               if (letter.status == 'draft') ...[
                 FilledButton.icon(
                   onPressed: () {
-                    context
-                        .read<LetterBloc>()
-                        .add(LetterSubmitted(letter.id));
+                    context.read<LetterBloc>().add(LetterSubmitted(letter.id));
                     Navigator.of(context).pop();
                   },
                   icon: const Icon(Icons.send_rounded),
@@ -117,9 +115,9 @@ class _LetterDetailScreenState extends State<LetterDetailScreen> {
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: () {
-                          context
-                              .read<LetterBloc>()
-                              .add(LetterApproved(letter.id));
+                          context.read<LetterBloc>().add(
+                            LetterApproved(letter.id),
+                          );
                           Navigator.of(context).pop();
                         },
                         icon: const Icon(Icons.check_rounded),
@@ -133,9 +131,9 @@ class _LetterDetailScreenState extends State<LetterDetailScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          context
-                              .read<LetterBloc>()
-                              .add(LetterRejected(letter.id));
+                          context.read<LetterBloc>().add(
+                            LetterRejected(letter.id),
+                          );
                           Navigator.of(context).pop();
                         },
                         icon: const Icon(Icons.close_rounded),
@@ -151,9 +149,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen> {
               if (letter.status != 'draft' && letter.status != 'submitted')
                 OutlinedButton.icon(
                   onPressed: () {
-                    context
-                        .read<LetterBloc>()
-                        .add(LetterArchived(letter.id));
+                    context.read<LetterBloc>().add(LetterArchived(letter.id));
                     Navigator.of(context).pop();
                   },
                   icon: const Icon(Icons.archive_outlined),

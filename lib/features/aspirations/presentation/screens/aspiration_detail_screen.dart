@@ -43,8 +43,7 @@ class _AspirationDetailScreenState extends State<AspirationDetailScreen> {
             return ErrorState(message: state.message, onRetry: _reload);
           }
 
-          final aspiration =
-              (state as AspirationDetailLoaded).aspiration;
+          final aspiration = (state as AspirationDetailLoaded).aspiration;
 
           return ListView(
             padding: const EdgeInsets.all(20),
@@ -52,7 +51,10 @@ class _AspirationDetailScreenState extends State<AspirationDetailScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(4),
@@ -78,10 +80,7 @@ class _AspirationDetailScreenState extends State<AspirationDetailScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                [
-                  aspiration.creatorName,
-                  aspiration.createdAt,
-                ].join(' · '),
+                [aspiration.creatorName, aspiration.createdAt].join(' · '),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               if (aspiration.tags.isNotEmpty) ...[
@@ -91,7 +90,10 @@ class _AspirationDetailScreenState extends State<AspirationDetailScreen> {
                   runSpacing: 4,
                   children: aspiration.tags
                       .map(
-                        (tag) => Chip(label: Text(tag), visualDensity: VisualDensity.compact),
+                        (tag) => Chip(
+                          label: Text(tag),
+                          visualDensity: VisualDensity.compact,
+                        ),
                       )
                       .toList(),
                 ),
@@ -174,7 +176,11 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         _label(status),
-        style: TextStyle(fontSize: 11, color: _color(status), fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 11,
+          color: _color(status),
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

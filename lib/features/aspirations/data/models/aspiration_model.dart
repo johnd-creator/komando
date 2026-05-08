@@ -31,6 +31,7 @@ class AspirationModel {
 
   factory AspirationModel.fromJson(Map<String, dynamic> json) {
     final category = readMap(json, 'category');
+    final creator = readMap(json, 'creator');
 
     return AspirationModel(
       id: readInt(json, const ['id']),
@@ -44,11 +45,14 @@ class AspirationModel {
       categoryName: readString(category, const ['name'], fallback: 'Umum'),
       creatorName: json['is_anonymous'] == true
           ? 'Anonim'
-          : readString(json, const ['creator_name'], fallback: 'Anggota'),
+          : readString(creator.isNotEmpty ? creator : json, const [
+              'member_name',
+              'user_name',
+              'creator_name',
+            ], fallback: 'Anggota'),
       createdAt: readString(json, const ['created_at'], fallback: ''),
-      tags: (json['tags'] as List<dynamic>?)
-              ?.whereType<String>()
-              .toList() ??
+      tags:
+          (json['tags'] as List<dynamic>?)?.whereType<String>().toList() ??
           const [],
     );
   }
@@ -71,7 +75,9 @@ class AspirationPageModel {
 
   factory AspirationPageModel.fromJson(Map<String, dynamic> json) {
     final meta = json['meta'] as Map<String, dynamic>? ?? {};
-    final data = readList(json, 'data');
+    final data = readList(json, 'items').isNotEmpty
+        ? readList(json, 'items')
+        : readList(json, 'data');
 
     return AspirationPageModel(
       items: data.map(AspirationModel.fromJson).toList(),
@@ -83,10 +89,7 @@ class AspirationPageModel {
 }
 
 class AspirationCategoryModel {
-  const AspirationCategoryModel({
-    required this.id,
-    required this.name,
-  });
+  const AspirationCategoryModel({required this.id, required this.name});
 
   final int id;
   final String name;
@@ -105,8 +108,6 @@ class AspirationTagModel {
   final String name;
 
   factory AspirationTagModel.fromJson(Map<String, dynamic> json) {
-    return AspirationTagModel(
-      name: readString(json, const ['name', 'tag']),
-    );
+    return AspirationTagModel(name: readString(json, const ['name', 'tag']));
   }
 }

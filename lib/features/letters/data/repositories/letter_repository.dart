@@ -44,25 +44,35 @@ class LetterRepository {
       '/letters',
       data: {
         'letter_category_id': categoryId,
+        'signer_type': 'ketua',
+        'to_type': 'admin_pusat',
         'subject': subject,
         'body': body,
+        'confidentiality': 'normal',
+        'urgency': 'normal',
       },
     );
-    return LetterModel.fromJson(response.data ?? {});
+    return LetterModel.fromJson(
+      response.data?['letter'] as Map<String, dynamic>? ?? response.data ?? {},
+    );
   }
 
   Future<LetterModel> submitLetter(int id) async {
     final response = await _apiClient.dio.post<Map<String, dynamic>>(
       '/letters/$id/submit',
     );
-    return LetterModel.fromJson(response.data ?? {});
+    return LetterModel.fromJson(
+      response.data?['letter'] as Map<String, dynamic>? ?? response.data ?? {},
+    );
   }
 
   Future<LetterModel> sendLetter(int id) async {
     final response = await _apiClient.dio.post<Map<String, dynamic>>(
       '/letters/$id/send',
     );
-    return LetterModel.fromJson(response.data ?? {});
+    return LetterModel.fromJson(
+      response.data?['letter'] as Map<String, dynamic>? ?? response.data ?? {},
+    );
   }
 
   Future<void> archiveLetter(int id) async {
@@ -73,21 +83,28 @@ class LetterRepository {
     final response = await _apiClient.dio.post<Map<String, dynamic>>(
       '/letters/$id/approve',
     );
-    return LetterModel.fromJson(response.data ?? {});
+    return LetterModel.fromJson(
+      response.data?['letter'] as Map<String, dynamic>? ?? response.data ?? {},
+    );
   }
 
   Future<LetterModel> rejectLetter(int id) async {
     final response = await _apiClient.dio.post<Map<String, dynamic>>(
       '/letters/$id/reject',
+      data: {'note': 'Ditolak dari aplikasi mobile'},
     );
-    return LetterModel.fromJson(response.data ?? {});
+    return LetterModel.fromJson(
+      response.data?['letter'] as Map<String, dynamic>? ?? response.data ?? {},
+    );
   }
 
   Future<List<LetterCategoryModel>> getCategories() async {
     final response = await _apiClient.dio.get<Map<String, dynamic>>(
       '/letters/categories',
     );
-    final data = readList(response.data ?? {}, 'data');
+    final data = readList(response.data ?? {}, 'items').isNotEmpty
+        ? readList(response.data ?? {}, 'items')
+        : readList(response.data ?? {}, 'data');
     return data.map(LetterCategoryModel.fromJson).toList();
   }
 }

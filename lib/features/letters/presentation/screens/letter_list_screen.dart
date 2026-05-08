@@ -225,10 +225,7 @@ class _LetterCard extends StatelessWidget {
         ),
         title: Text(letter.subject),
         subtitle: Text(
-          [
-            letter.creatorName,
-            letter.createdAt,
-          ].join(' · '),
+          [letter.creatorName, letter.createdAt].join(' · '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),

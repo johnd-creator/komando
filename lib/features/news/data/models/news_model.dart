@@ -1,6 +1,7 @@
 String _stripHtml(String html) {
   if (html.isEmpty) return '';
-  return html.replaceAll(RegExp(r'<[^>]*>'), '')
+  return html
+      .replaceAll(RegExp(r'<[^>]*>'), '')
       .replaceAll(RegExp(r'&#?[a-zA-Z0-9]+;'), '')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
@@ -50,8 +51,18 @@ class NewsModel {
     try {
       final date = DateTime.parse(isoDate);
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-        'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
       ];
       return '${date.day} ${months[date.month - 1]} ${date.year}';
     } catch (_) {

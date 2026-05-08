@@ -9,14 +9,10 @@ void main() {
         'date': '2026-05-07T01:20:28',
         'link': 'https://sppips.org/2026/05/07/test-post/',
         'title': {'rendered': 'Judul Berita'},
-        'excerpt': {
-          'rendered': '<p>Ringkasan berita test.</p>',
-        },
+        'excerpt': {'rendered': '<p>Ringkasan berita test.</p>'},
         '_embedded': {
           'wp:featuredmedia': [
-            {
-              'source_url': 'https://sppips.org/image.jpg',
-            }
+            {'source_url': 'https://sppips.org/image.jpg'},
           ],
         },
       };

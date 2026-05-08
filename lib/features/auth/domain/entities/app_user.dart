@@ -17,6 +17,18 @@ class AppUser extends Equatable {
 
   bool get hasAdminAccess => roleName != 'anggota';
 
+  bool get canAccessFinance {
+    return const {
+      'super_admin',
+      'admin_pusat',
+      'admin_unit',
+      'bendahara',
+      'bendahara_pusat',
+      'pengurus',
+      'pengurus_pusat',
+    }.contains(roleName);
+  }
+
   @override
   List<Object?> get props => [id, name, email, roleName, roleLabel];
 }

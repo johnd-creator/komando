@@ -36,9 +36,9 @@ class _LetterCreateScreenState extends State<LetterCreateScreen> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     if (_categoryId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Pilih kategori terlebih dahulu.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih kategori terlebih dahulu.')),
+      );
       return;
     }
 
@@ -75,8 +75,9 @@ class _LetterCreateScreenState extends State<LetterCreateScreen> {
               return const LoadingState(message: 'Membuat surat...');
             }
 
-            final categories =
-                state is LetterCategoriesLoaded ? state.categories : null;
+            final categories = state is LetterCategoriesLoaded
+                ? state.categories
+                : null;
 
             return ListView(
               padding: const EdgeInsets.all(20),

@@ -53,11 +53,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
-                        CircleAvatar(
-                          radius: 36,
-                          child: Text(
-                            profile.name.characters.first.toUpperCase(),
-                          ),
+                        _ProfileAvatar(
+                          photoUrl: profile.photoUrl,
+                          name: profile.name,
+                          radius: 48,
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -69,7 +68,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 4),
                         Text(profile.email),
                         const SizedBox(height: 8),
-                        Chip(label: Text(profile.status)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _StatusBadge(label: profile.status),
+                            if (profile.memberNumber.isNotEmpty &&
+                                profile.memberNumber != '-')
+                              const SizedBox(width: 8),
+                            if (profile.memberNumber.isNotEmpty &&
+                                profile.memberNumber != '-')
+                              _StatusBadge(
+                                label: profile.memberNumber,
+                                color: Colors.blueGrey,
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -115,6 +128,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({
+    required this.photoUrl,
+    required this.name,
+    required this.radius,
+  });
+
+  final String? photoUrl;
+  final String name;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    if (photoUrl != null && photoUrl!.isNotEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundImage: NetworkImage(photoUrl!),
+        onBackgroundImageError: (_, _) {
+          // Fallback handled below by rebuilding
+        },
+        child: _initialsAvatar(name, radius),
+      );
+    }
+    return _initialsAvatar(name, radius);
+  }
+
+  Widget _initialsAvatar(String name, double radius) {
+    return CircleAvatar(
+      radius: radius,
+      child: Text(
+        name.characters.first.toUpperCase(),
+        style: TextStyle(fontSize: radius * 0.65),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({
+    required this.label,
+    this.color,
+  });
+
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: (color ?? Theme.of(context).colorScheme.primaryContainer)
+            .withAlpha(30),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: color ?? Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }

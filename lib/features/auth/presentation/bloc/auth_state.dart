@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/app_user.dart';
+import '../../domain/entities/login_preferences.dart';
 
 sealed class AuthState extends Equatable {
   const AuthState();
@@ -19,6 +20,15 @@ class AuthLoading extends AuthState {
 
 class AuthUnauthenticated extends AuthState {
   const AuthUnauthenticated();
+}
+
+class AuthLoginOptionsLoaded extends AuthState {
+  const AuthLoginOptionsLoaded(this.preferences);
+
+  final LoginPreferences preferences;
+
+  @override
+  List<Object?> get props => [preferences];
 }
 
 class AuthAuthenticated extends AuthState {

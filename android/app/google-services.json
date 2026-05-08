@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "479016220889",
+    "project_id": "komando-5c534",
+    "storage_bucket": "komando-5c534.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:479016220889:android:ab503658fc7f9f64eea6c8",
+        "android_client_info": {
+          "package_name": "org.sppips.komando"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "479016220889-taa3hbe6okpio7016jb43263mlmbbm59.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.sppips.komando",
+            "certificate_hash": "e176ac8e952ecd3ef11b302942f3414fc02e1c38"
+          }
+        },
+        {
+          "client_id": "479016220889-9oiqrc1229fqi057bu9h5im60g8p9shq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARCdm_-2bJ0GHZcjYAFQbRg65uYZ6zNxk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "479016220889-9oiqrc1229fqi057bu9h5im60g8p9shq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

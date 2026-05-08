@@ -1,0 +1,147 @@
+import '../../../../core/api/api_client.dart';
+import '../../../../core/api/json_read.dart';
+import '../models/dues_model.dart';
+import '../models/finance_model.dart';
+
+class FinanceRepository {
+  const FinanceRepository(this._apiClient);
+
+  final ApiClient _apiClient;
+
+  Future<DuesResponse> getDues() async {
+    final response = await _apiClient.dio.get<Map<String, dynamic>>('/dues');
+    return DuesResponse.fromJson(response.data ?? {});
+  }
+
+  Future<FinanceDashboardModel> getDashboard() async {
+    final response = await _apiClient.dio.get<Map<String, dynamic>>(
+      '/finance/dashboard',
+    );
+    return FinanceDashboardModel.fromJson(response.data ?? {});
+  }
+
+  Future<FinanceLedgerPageModel> getLedgers({
+    int page = 1,
+    int perPage = 20,
+    String? type,
+    String? status,
+    int? categoryId,
+    int? unitId,
+    String? from,
+    String? to,
+  }) async {
+    final queryParameters = <String, dynamic>{
+      'page': page,
+      'per_page': perPage,
+    };
+    if (type != null && type.isNotEmpty) queryParameters['type'] = type;
+    if (status != null && status.isNotEmpty) {
+      queryParameters['status'] = status;
+    }
+    if (categoryId != null) {
+      queryParameters['finance_category_id'] = categoryId;
+    }
+    if (unitId != null) queryParameters['unit_id'] = unitId;
+    if (from != null && from.isNotEmpty) queryParameters['from'] = from;
+    if (to != null && to.isNotEmpty) queryParameters['to'] = to;
+
+    final response = await _apiClient.dio.get<Map<String, dynamic>>(
+      '/finance/ledgers',
+      queryParameters: queryParameters,
+    );
+    return FinanceLedgerPageModel.fromJson(response.data ?? {});
+  }
+
+  Future<FinanceUnitsResponse> getUnits() async {
+    final response = await _apiClient.dio.get<Map<String, dynamic>>(
+      '/finance/units',
+    );
+    return FinanceUnitsResponse.fromJson(response.data ?? {});
+  }
+
+  Future<FinanceLedgerModel> createLedger({
+    required String date,
+    required int categoryId,
+    required String type,
+    required double amount,
+    required String description,
+    int? unitId,
+  }) async {
+    final data = <String, dynamic>{
+      'date': date,
+      'finance_category_id': categoryId,
+      'type': type,
+      'amount': amount,
+      'description': description,
+    };
+    if (unitId != null) data['organization_unit_id'] = unitId;
+
+    final response = await _apiClient.dio.post<Map<String, dynamic>>(
+      '/finance/ledgers',
+      data: data,
+    );
+    return FinanceLedgerModel.fromJson(
+      response.data?['ledger'] as Map<String, dynamic>? ??
+          response.data?['data'] as Map<String, dynamic>? ??
+          {},
+    );
+  }
+
+  Future<FinanceLedgerModel> updateLedger(
+    int id, {
+    String? date,
+    int? categoryId,
+    String? type,
+    double? amount,
+    String? description,
+    int? unitId,
+  }) async {
+    final data = <String, dynamic>{};
+    if (date != null) data['date'] = date;
+    if (categoryId != null) data['finance_category_id'] = categoryId;
+    if (type != null) data['type'] = type;
+    if (amount != null) data['amount'] = amount;
+    if (description != null) data['description'] = description;
+    if (unitId != null) data['organization_unit_id'] = unitId;
+
+    final response = await _apiClient.dio.put<Map<String, dynamic>>(
+      '/finance/ledgers/$id',
+      data: data,
+    );
+    return FinanceLedgerModel.fromJson(
+      response.data?['ledger'] as Map<String, dynamic>? ??
+          response.data?['data'] as Map<String, dynamic>? ??
+          {},
+    );
+  }
+
+  Future<void> deleteLedger(int id) async {
+    await _apiClient.dio.delete('/finance/ledgers/$id');
+  }
+
+  Future<void> approveLedger(int id) async {
+    await _apiClient.dio.post('/finance/ledgers/$id/approve');
+  }
+
+  Future<void> rejectLedger(int id, String reason) async {
+    await _apiClient.dio.post(
+      '/finance/ledgers/$id/reject',
+      data: {'reason': reason},
+    );
+  }
+
+  Future<List<LedgerCategoryModel>> getCategories({String? type}) async {
+    final query = <String, dynamic>{};
+    if (type != null && type.isNotEmpty) query['type'] = type;
+
+    final response = await _apiClient.dio.get<Map<String, dynamic>>(
+      '/finance/categories',
+      queryParameters: query,
+    );
+    final categories = readList(
+      response.data ?? {},
+      'categories',
+    ).map((e) => LedgerCategoryModel.fromJson(e)).toList();
+    return categories;
+  }
+}

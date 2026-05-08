@@ -7,9 +7,6 @@ class FeedbackRepository {
   final ApiClient _apiClient;
 
   Future<void> submit(FeedbackRequest feedback) async {
-    await _apiClient.dio.post<void>(
-      '/feedback',
-      data: feedback.toJson(),
-    );
+    await _apiClient.dio.post<void>('/feedback', data: feedback.toJson());
   }
 }

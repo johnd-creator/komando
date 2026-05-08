@@ -26,10 +26,7 @@ void main() {
     test('401 returns session expired message', () {
       final error = DioException(
         type: DioExceptionType.badResponse,
-        response: Response(
-          requestOptions: RequestOptions(),
-          statusCode: 401,
-        ),
+        response: Response(requestOptions: RequestOptions(), statusCode: 401),
         requestOptions: RequestOptions(),
       );
       final message = ApiErrorHandler.getMessage(error);
@@ -39,10 +36,7 @@ void main() {
     test('403 returns access denied message', () {
       final error = DioException(
         type: DioExceptionType.badResponse,
-        response: Response(
-          requestOptions: RequestOptions(),
-          statusCode: 403,
-        ),
+        response: Response(requestOptions: RequestOptions(), statusCode: 403),
         requestOptions: RequestOptions(),
       );
       final message = ApiErrorHandler.getMessage(error);
@@ -52,10 +46,7 @@ void main() {
     test('404 returns not found message', () {
       final error = DioException(
         type: DioExceptionType.badResponse,
-        response: Response(
-          requestOptions: RequestOptions(),
-          statusCode: 404,
-        ),
+        response: Response(requestOptions: RequestOptions(), statusCode: 404),
         requestOptions: RequestOptions(),
       );
       final message = ApiErrorHandler.getMessage(error);
@@ -65,10 +56,7 @@ void main() {
     test('422 returns validation message', () {
       final error = DioException(
         type: DioExceptionType.badResponse,
-        response: Response(
-          requestOptions: RequestOptions(),
-          statusCode: 422,
-        ),
+        response: Response(requestOptions: RequestOptions(), statusCode: 422),
         requestOptions: RequestOptions(),
       );
       final message = ApiErrorHandler.getMessage(error);
@@ -78,10 +66,7 @@ void main() {
     test('429 returns rate limit message', () {
       final error = DioException(
         type: DioExceptionType.badResponse,
-        response: Response(
-          requestOptions: RequestOptions(),
-          statusCode: 429,
-        ),
+        response: Response(requestOptions: RequestOptions(), statusCode: 429),
         requestOptions: RequestOptions(),
       );
       final message = ApiErrorHandler.getMessage(error);
@@ -91,14 +76,21 @@ void main() {
     test('500 returns server error message', () {
       final error = DioException(
         type: DioExceptionType.badResponse,
-        response: Response(
-          requestOptions: RequestOptions(),
-          statusCode: 500,
-        ),
+        response: Response(requestOptions: RequestOptions(), statusCode: 500),
         requestOptions: RequestOptions(),
       );
       final message = ApiErrorHandler.getMessage(error);
       expect(message, 'Server sedang bermasalah. Silakan coba lagi.');
+    });
+
+    test('501 returns mobile google login not enabled message', () {
+      final error = DioException(
+        type: DioExceptionType.badResponse,
+        response: Response(requestOptions: RequestOptions(), statusCode: 501),
+        requestOptions: RequestOptions(),
+      );
+      final message = ApiErrorHandler.getMessage(error);
+      expect(message, 'Login Google mobile belum aktif di server.');
     });
 
     test('non-Dio error returns generic message', () {

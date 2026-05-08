@@ -9,6 +9,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   NotificationBloc(this._repository) : super(const NotificationInitial()) {
     on<NotificationsFetched>(_onFetched);
     on<NotificationReadRequested>(_onReadRequested);
+    on<NotificationsReadAllRequested>(_onReadAllRequested);
   }
 
   final NotificationRepository _repository;
@@ -31,6 +32,18 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   ) async {
     try {
       await _repository.markAsRead(event.id);
+      emit(NotificationLoaded(await _repository.getNotifications()));
+    } catch (error) {
+      emit(NotificationFailure(ApiErrorHandler.getMessage(error)));
+    }
+  }
+
+  Future<void> _onReadAllRequested(
+    NotificationsReadAllRequested event,
+    Emitter<NotificationState> emit,
+  ) async {
+    try {
+      await _repository.markAllRead();
       emit(NotificationLoaded(await _repository.getNotifications()));
     } catch (error) {
       emit(NotificationFailure(ApiErrorHandler.getMessage(error)));

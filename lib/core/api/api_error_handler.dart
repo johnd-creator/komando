@@ -36,6 +36,7 @@ class ApiErrorHandler {
       404 => 'Data tidak ditemukan.',
       422 => 'Periksa kembali data yang Anda isi.',
       429 => 'Terlalu banyak percobaan. Coba lagi nanti.',
+      501 => 'Login Google mobile belum aktif di server.',
       >= 500 => 'Server sedang bermasalah. Silakan coba lagi.',
       _ => 'Data gagal dimuat. Silakan coba lagi.',
     };

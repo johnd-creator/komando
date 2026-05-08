@@ -25,7 +25,12 @@ class _AspirationListScreenState extends State<AspirationListScreen> {
 
   void _reload() {
     context.read<AspirationBloc>().add(
-      AspirationsFetched(category: _category, status: _status, sort: _sort, refresh: true),
+      AspirationsFetched(
+        category: _category,
+        status: _status,
+        sort: _sort,
+        refresh: true,
+      ),
     );
   }
 
@@ -88,7 +93,8 @@ class _AspirationListScreenState extends State<AspirationListScreen> {
                     height: 400,
                     child: EmptyState(
                       title: 'Belum ada aspirasi',
-                      message: 'Belum ada aspirasi yang dikirim. Gunakan tombol Buat untuk mengirim aspirasi pertama Anda.',
+                      message:
+                          'Belum ada aspirasi yang dikirim. Gunakan tombol Buat untuk mengirim aspirasi pertama Anda.',
                     ),
                   );
                 }
@@ -123,7 +129,9 @@ class _AspirationListScreenState extends State<AspirationListScreen> {
           children: [
             Text(
               'Filter & Urutkan',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
@@ -137,7 +145,10 @@ class _AspirationListScreenState extends State<AspirationListScreen> {
                 DropdownMenuItem(value: null, child: Text('Semua')),
                 DropdownMenuItem(value: 'fasilitas', child: Text('Fasilitas')),
                 DropdownMenuItem(value: 'pelayanan', child: Text('Pelayanan')),
-                DropdownMenuItem(value: 'kesejahteraan', child: Text('Kesejahteraan')),
+                DropdownMenuItem(
+                  value: 'kesejahteraan',
+                  child: Text('Kesejahteraan'),
+                ),
                 DropdownMenuItem(value: 'lainnya', child: Text('Lainnya')),
               ],
               onChanged: (value) {
@@ -156,7 +167,10 @@ class _AspirationListScreenState extends State<AspirationListScreen> {
               ),
               items: const [
                 DropdownMenuItem(value: null, child: Text('Semua')),
-                DropdownMenuItem(value: 'belum_diproses', child: Text('Belum diproses')),
+                DropdownMenuItem(
+                  value: 'belum_diproses',
+                  child: Text('Belum diproses'),
+                ),
                 DropdownMenuItem(value: 'diproses', child: Text('Diproses')),
                 DropdownMenuItem(value: 'selesai', child: Text('Selesai')),
               ],
@@ -224,10 +238,7 @@ class _AspirationCard extends StatelessWidget {
         ),
         title: Text(aspiration.title),
         subtitle: Text(
-          [
-            aspiration.creatorName,
-            aspiration.createdAt,
-          ].join(' · '),
+          [aspiration.creatorName, aspiration.createdAt].join(' · '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -239,14 +250,22 @@ class _AspirationCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: _statusColor(aspiration.status).withValues(alpha: 0.12),
+                    color: _statusColor(
+                      aspiration.status,
+                    ).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     _statusLabel(aspiration.status),
-                    style: TextStyle(fontSize: 11, color: _statusColor(aspiration.status)),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: _statusColor(aspiration.status),
+                    ),
                   ),
                 ),
                 if (aspiration.supportCount > 0) ...[

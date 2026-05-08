@@ -22,6 +22,19 @@ import '../../features/letters/presentation/screens/letter_list_screen.dart';
 import '../../features/feedback/data/repositories/feedback_repository.dart';
 import '../../features/feedback/presentation/bloc/feedback_bloc.dart';
 import '../../features/feedback/presentation/screens/feedback_screen.dart';
+import '../../features/finance/data/repositories/finance_repository.dart';
+import '../../features/finance/presentation/bloc/finance_bloc.dart';
+import '../../features/finance/presentation/bloc/finance_event.dart';
+import '../../features/finance/presentation/screens/iuran_screen.dart';
+import '../../features/finance/presentation/screens/keuangan_screen.dart';
+import '../../features/finance/presentation/screens/ledger_form_screen.dart';
+import '../../features/finance/presentation/screens/ledger_detail_screen.dart';
+import '../../features/admin/data/repositories/admin_repository.dart';
+import '../../features/admin/presentation/bloc/admin_bloc.dart';
+import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../features/admin/presentation/screens/member_list_screen.dart';
+import '../../features/admin/presentation/screens/member_detail_screen.dart';
+import '../../features/admin/presentation/screens/reports_screen.dart';
 import '../../features/news/data/repositories/news_repository.dart';
 import '../../features/news/presentation/bloc/news_bloc.dart';
 import '../../features/news/presentation/screens/news_list_screen.dart';
@@ -41,12 +54,16 @@ class AppRouter {
     required LetterRepository letterRepository,
     required FeedbackRepository feedbackRepository,
     required NewsRepository newsRepository,
+    required FinanceRepository financeRepository,
+    required AdminRepository adminRepository,
   }) : _authBloc = authBloc,
        _announcementRepository = announcementRepository,
        _aspirationRepository = aspirationRepository,
        _letterRepository = letterRepository,
        _feedbackRepository = feedbackRepository,
-       _newsRepository = newsRepository;
+       _newsRepository = newsRepository,
+       _financeRepository = financeRepository,
+       _adminRepository = adminRepository;
 
   final AuthBloc _authBloc;
   final AnnouncementRepository _announcementRepository;
@@ -54,6 +71,9 @@ class AppRouter {
   final LetterRepository _letterRepository;
   final FeedbackRepository _feedbackRepository;
   final NewsRepository _newsRepository;
+  final FinanceRepository _financeRepository;
+
+  final AdminRepository _adminRepository;
 
   late final GoRouter router = GoRouter(
     initialLocation: AppRoutes.splash,
@@ -149,6 +169,80 @@ class AppRouter {
         builder: (context, state) => BlocProvider(
           create: (_) => NewsBloc(_newsRepository),
           child: const NewsListScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.iuran,
+        builder: (context, state) => BlocProvider(
+          create: (_) => FinanceBloc(_financeRepository),
+          child: const IuranScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.keuangan,
+        builder: (context, state) => BlocProvider(
+          create: (_) => FinanceBloc(_financeRepository),
+          child: const KeuanganScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.financeLedgerCreate,
+        builder: (context, state) => BlocProvider(
+          create: (_) => FinanceBloc(_financeRepository),
+          child: const LedgerFormScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/finance/ledgers/:id/edit',
+        builder: (context, state) => BlocProvider(
+          create: (_) => FinanceBloc(_financeRepository),
+          child: LedgerFormScreen(
+            editId: int.tryParse(state.pathParameters['id'] ?? ''),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/finance/ledgers/:id',
+        builder: (context, state) => BlocProvider(
+          create: (_) => FinanceBloc(_financeRepository)
+            ..add(
+              FinanceLedgerDetailFetched(
+                int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+              ),
+            ),
+          child: LedgerDetailScreen(
+            id: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.admin,
+        builder: (context, state) => BlocProvider(
+          create: (_) => AdminBloc(_adminRepository),
+          child: const AdminDashboardScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.adminMembers,
+        builder: (context, state) => BlocProvider(
+          create: (_) => AdminBloc(_adminRepository),
+          child: const MemberListScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/members/:id',
+        builder: (context, state) => BlocProvider(
+          create: (_) => AdminBloc(_adminRepository),
+          child: MemberDetailScreen(
+            id: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.adminReports,
+        builder: (context, state) => BlocProvider(
+          create: (_) => AdminBloc(_adminRepository),
+          child: const ReportsScreen(),
         ),
       ),
     ],

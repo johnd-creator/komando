@@ -76,9 +76,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     final star = index + 1;
                     return IconButton(
                       iconSize: 40,
-                      onPressed: submitting ? null : () => setState(() => _rating = star),
+                      onPressed: submitting
+                          ? null
+                          : () => setState(() => _rating = star),
                       icon: Icon(
-                        star <= _rating ? Icons.star_rounded : Icons.star_border_rounded,
+                        star <= _rating
+                            ? Icons.star_rounded
+                            : Icons.star_border_rounded,
                         color: Colors.amber,
                       ),
                     );
@@ -98,14 +102,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 const SizedBox(height: 24),
                 FilledButton.icon(
                   onPressed: submitting ? null : _submit,
-                  icon:
-                      submitting
-                          ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Icon(Icons.send_rounded),
+                  icon: submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.send_rounded),
                   label: Text(submitting ? 'Mengirim...' : 'Kirim Feedback'),
                 ),
               ],

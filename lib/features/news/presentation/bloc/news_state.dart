@@ -18,11 +18,7 @@ class NewsLoading extends NewsState {
 }
 
 class NewsLoaded extends NewsState {
-  const NewsLoaded({
-    required this.items,
-    required this.hasMore,
-    this.page = 1,
-  });
+  const NewsLoaded({required this.items, required this.hasMore, this.page = 1});
 
   final List<NewsModel> items;
   final int page;

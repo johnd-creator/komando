@@ -10,11 +10,15 @@ class LoginUseCase {
     required String email,
     required String password,
     required String deviceName,
+    bool rememberAccount = false,
+    bool enableBiometric = false,
   }) {
     return _repository.login(
       email: email,
       password: password,
       deviceName: deviceName,
+      rememberAccount: rememberAccount,
+      enableBiometric: enableBiometric,
     );
   }
 }

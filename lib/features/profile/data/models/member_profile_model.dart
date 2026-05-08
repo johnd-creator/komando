@@ -9,6 +9,7 @@ class MemberProfileModel {
     required this.unit,
     required this.status,
     required this.memberNumber,
+    required this.photoUrl,
   });
 
   final String name;
@@ -18,6 +19,7 @@ class MemberProfileModel {
   final String unit;
   final String status;
   final String memberNumber;
+  final String? photoUrl;
 
   factory MemberProfileModel.fromJson(Map<String, dynamic> json) {
     final data = readMap(json, 'data').isNotEmpty
@@ -27,14 +29,16 @@ class MemberProfileModel {
         ? readMap(data, 'member')
         : data;
     final user = readMap(data, 'user');
-    final unit = readMap(member, 'unit').isNotEmpty
-        ? readMap(member, 'unit')
-        : readMap(member, 'current_unit');
+    final unit = readMap(member, 'organization_unit').isNotEmpty
+        ? readMap(member, 'organization_unit')
+        : readMap(data, 'unit').isNotEmpty
+            ? readMap(data, 'unit')
+            : readMap(member, 'unit');
 
     return MemberProfileModel(
       name: readString(member, const [
-        'name',
         'full_name',
+        'name',
       ], fallback: readString(user, const ['name'], fallback: 'Anggota')),
       email: readString(user.isNotEmpty ? user : member, const ['email']),
       phone: readString(member, const [
@@ -52,10 +56,13 @@ class MemberProfileModel {
         'membership_status',
       ], fallback: '-'),
       memberNumber: readString(member, const [
+        'kta_number',
+        'nra',
+        'nip',
         'nomor_anggota',
         'member_number',
-        'kta_number',
       ], fallback: '-'),
+      photoUrl: member['photo_url'] as String?,
     );
   }
 }

@@ -70,9 +70,9 @@ class _AspirationCreateScreenState extends State<AspirationCreateScreen> {
             context.pop();
           }
           if (state is AspirationFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         child: BlocBuilder<AspirationBloc, AspirationState>(
@@ -81,8 +81,9 @@ class _AspirationCreateScreenState extends State<AspirationCreateScreen> {
               return const LoadingState(message: 'Mengirim aspirasi...');
             }
 
-            final categories =
-                state is AspirationCategoriesLoaded ? state.categories : null;
+            final categories = state is AspirationCategoriesLoaded
+                ? state.categories
+                : null;
 
             return ListView(
               padding: const EdgeInsets.all(20),
@@ -195,7 +196,9 @@ class _AspirationCreateScreenState extends State<AspirationCreateScreen> {
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Kirim anonim'),
-                        subtitle: const Text('Nama Anda tidak akan ditampilkan.'),
+                        subtitle: const Text(
+                          'Nama Anda tidak akan ditampilkan.',
+                        ),
                         value: _isAnonymous,
                         onChanged: (value) {
                           setState(() => _isAnonymous = value);

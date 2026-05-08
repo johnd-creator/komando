@@ -39,8 +39,7 @@ class AspirationBloc extends Bloc<AspirationEvent, AspirationState> {
       final page = await _repository.getAspirations(
         page: nextPage,
         perPage: _perPage,
-        category: event.category ??
-            (isNextPage ? currentState.category : null),
+        category: event.category ?? (isNextPage ? currentState.category : null),
         status: event.status ?? (isNextPage ? currentState.status : null),
         sort: event.sort ?? (isNextPage ? currentState.sort : null),
       );
@@ -50,7 +49,8 @@ class AspirationBloc extends Bloc<AspirationEvent, AspirationState> {
           items: [...previousItems, ...page.items],
           currentPage: page.currentPage,
           hasMore: page.hasMore,
-          category: event.category ?? (isNextPage ? currentState.category : null),
+          category:
+              event.category ?? (isNextPage ? currentState.category : null),
           status: event.status ?? (isNextPage ? currentState.status : null),
           sort: event.sort ?? (isNextPage ? currentState.sort : null),
         ),
@@ -66,9 +66,7 @@ class AspirationBloc extends Bloc<AspirationEvent, AspirationState> {
   ) async {
     emit(const AspirationLoading());
     try {
-      emit(
-        AspirationDetailLoaded(await _repository.getAspiration(event.id)),
-      );
+      emit(AspirationDetailLoaded(await _repository.getAspiration(event.id)));
     } catch (error) {
       emit(AspirationFailure(ApiErrorHandler.getMessage(error)));
     }
@@ -117,9 +115,7 @@ class AspirationBloc extends Bloc<AspirationEvent, AspirationState> {
     Emitter<AspirationState> emit,
   ) async {
     try {
-      emit(
-        AspirationCategoriesLoaded(await _repository.getCategories()),
-      );
+      emit(AspirationCategoriesLoaded(await _repository.getCategories()));
     } catch (error) {
       emit(AspirationFailure(ApiErrorHandler.getMessage(error)));
     }
@@ -130,9 +126,7 @@ class AspirationBloc extends Bloc<AspirationEvent, AspirationState> {
     Emitter<AspirationState> emit,
   ) async {
     try {
-      emit(
-        AspirationTagsLoaded(await _repository.getTags()),
-      );
+      emit(AspirationTagsLoaded(await _repository.getTags()));
     } catch (error) {
       emit(AspirationFailure(ApiErrorHandler.getMessage(error)));
     }

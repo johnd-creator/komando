@@ -14,27 +14,19 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
 
   final NewsRepository _repository;
 
-  Future<void> _onFetched(
-    NewsFetched event,
-    Emitter<NewsState> emit,
-  ) async {
+  Future<void> _onFetched(NewsFetched event, Emitter<NewsState> emit) async {
     emit(const NewsLoading());
     try {
       final items = await _repository.getPosts(page: 1, perPage: _perPage);
-      emit(NewsLoaded(
-        items: items,
-        page: 1,
-        hasMore: items.length >= _perPage,
-      ));
+      emit(
+        NewsLoaded(items: items, page: 1, hasMore: items.length >= _perPage),
+      );
     } catch (error) {
       emit(const NewsFailure('Gagal memuat berita.'));
     }
   }
 
-  Future<void> _onLoadMore(
-    NewsLoadMore event,
-    Emitter<NewsState> emit,
-  ) async {
+  Future<void> _onLoadMore(NewsLoadMore event, Emitter<NewsState> emit) async {
     if (state is! NewsLoaded) return;
 
     final current = state as NewsLoaded;
@@ -42,12 +34,17 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
 
     try {
       final nextPage = current.page + 1;
-      final items = await _repository.getPosts(page: nextPage, perPage: _perPage);
-      emit(NewsLoaded(
-        items: [...current.items, ...items],
+      final items = await _repository.getPosts(
         page: nextPage,
-        hasMore: items.length >= _perPage,
-      ));
+        perPage: _perPage,
+      );
+      emit(
+        NewsLoaded(
+          items: [...current.items, ...items],
+          page: nextPage,
+          hasMore: items.length >= _perPage,
+        ),
+      );
     } catch (error) {
       emit(const NewsFailure('Gagal memuat berita tambahan.'));
     }

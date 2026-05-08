@@ -4,16 +4,10 @@ import '../../../features/home/presentation/screens/home_screen.dart';
 import '../../../features/kta/presentation/screens/kta_digital_screen.dart';
 import '../../../features/notifications/presentation/screens/notification_screen.dart';
 import '../../../features/profile/presentation/screens/profile_screen.dart';
+import '../notifiers/bottom_nav_notifier.dart';
 
-class MainShell extends StatefulWidget {
+class MainShell extends StatelessWidget {
   const MainShell({super.key});
-
-  @override
-  State<MainShell> createState() => _MainShellState();
-}
-
-class _MainShellState extends State<MainShell> {
-  int _selectedIndex = 0;
 
   static const _screens = [
     HomeScreen(),
@@ -24,12 +18,15 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final notifier = BottomNavScope.of(context);
+    final selectedIndex = notifier.index;
+
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _screens),
+      body: IndexedStack(index: selectedIndex, children: _screens),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
+        selectedIndex: selectedIndex,
         onDestinationSelected: (index) {
-          setState(() => _selectedIndex = index);
+          notifier.goToTab(index);
         },
         destinations: const [
           NavigationDestination(

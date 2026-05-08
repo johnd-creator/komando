@@ -100,10 +100,7 @@ class LetterBloc extends Bloc<LetterEvent, LetterState> {
     }
   }
 
-  Future<void> _onSent(
-    LetterSent event,
-    Emitter<LetterState> emit,
-  ) async {
+  Future<void> _onSent(LetterSent event, Emitter<LetterState> emit) async {
     try {
       await _repository.sendLetter(event.id);
       emit(const LetterActionDone());

@@ -58,7 +58,9 @@ void main() {
 
   group('readMap', () {
     test('returns map value', () {
-      final json = {'data': {'key': 'value'}};
+      final json = {
+        'data': {'key': 'value'},
+      };
       final result = readMap(json, 'data');
       expect(result, {'key': 'value'});
     });

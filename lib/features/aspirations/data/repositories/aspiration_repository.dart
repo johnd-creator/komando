@@ -40,8 +40,7 @@ class AspirationRepository {
       '/aspirations/$id',
     );
     final data = response.data ?? {};
-    final aspirationJson =
-        data['aspiration'] as Map<String, dynamic>? ?? data;
+    final aspirationJson = data['aspiration'] as Map<String, dynamic>? ?? data;
     return AspirationModel.fromJson(aspirationJson);
   }
 
@@ -62,7 +61,11 @@ class AspirationRepository {
         'is_anonymous': isAnonymous,
       },
     );
-    return AspirationModel.fromJson(response.data ?? {});
+    return AspirationModel.fromJson(
+      response.data?['aspiration'] as Map<String, dynamic>? ??
+          response.data ??
+          {},
+    );
   }
 
   Future<void> support(int id) async {
@@ -77,7 +80,9 @@ class AspirationRepository {
     final response = await _apiClient.dio.get<Map<String, dynamic>>(
       '/aspiration-categories',
     );
-    final data = readList(response.data ?? {}, 'data');
+    final data = readList(response.data ?? {}, 'items').isNotEmpty
+        ? readList(response.data ?? {}, 'items')
+        : readList(response.data ?? {}, 'data');
     return data.map(AspirationCategoryModel.fromJson).toList();
   }
 
@@ -85,6 +90,17 @@ class AspirationRepository {
     final response = await _apiClient.dio.get<Map<String, dynamic>>(
       '/aspiration-tags',
     );
+    final rawItems = response.data?['items'];
+    if (rawItems is List) {
+      return rawItems
+          .map(
+            (item) => item is Map<String, dynamic>
+                ? AspirationTagModel.fromJson(item)
+                : AspirationTagModel(name: item.toString()),
+          )
+          .toList();
+    }
+
     final data = readList(response.data ?? {}, 'data');
     return data.map(AspirationTagModel.fromJson).toList();
   }
