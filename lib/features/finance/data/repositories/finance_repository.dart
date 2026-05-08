@@ -30,24 +30,18 @@ class FinanceRepository {
     String? from,
     String? to,
   }) async {
-    final queryParameters = <String, dynamic>{
-      'page': page,
-      'per_page': perPage,
-    };
-    if (type != null && type.isNotEmpty) queryParameters['type'] = type;
-    if (status != null && status.isNotEmpty) {
-      queryParameters['status'] = status;
-    }
-    if (categoryId != null) {
-      queryParameters['finance_category_id'] = categoryId;
-    }
-    if (unitId != null) queryParameters['unit_id'] = unitId;
-    if (from != null && from.isNotEmpty) queryParameters['from'] = from;
-    if (to != null && to.isNotEmpty) queryParameters['to'] = to;
-
     final response = await _apiClient.dio.get<Map<String, dynamic>>(
       '/finance/ledgers',
-      queryParameters: queryParameters,
+      queryParameters: {
+        'page': page,
+        'per_page': perPage,
+        if (type != null && type.isNotEmpty) 'type': type,
+        if (status != null && status.isNotEmpty) 'status': status,
+        'finance_category_id': ?categoryId,
+        'unit_id': ?unitId,
+        if (from != null && from.isNotEmpty) 'from': from,
+        if (to != null && to.isNotEmpty) 'to': to,
+      },
     );
     return FinanceLedgerPageModel.fromJson(response.data ?? {});
   }
@@ -67,23 +61,19 @@ class FinanceRepository {
     required String description,
     int? unitId,
   }) async {
-    final data = <String, dynamic>{
-      'date': date,
-      'finance_category_id': categoryId,
-      'type': type,
-      'amount': amount,
-      'description': description,
-    };
-    if (unitId != null) data['organization_unit_id'] = unitId;
-
     final response = await _apiClient.dio.post<Map<String, dynamic>>(
       '/finance/ledgers',
-      data: data,
+      data: {
+        'date': date,
+        'finance_category_id': categoryId,
+        'type': type,
+        'amount': amount,
+        'description': description,
+        'organization_unit_id': ?unitId,
+      },
     );
     return FinanceLedgerModel.fromJson(
-      response.data?['ledger'] as Map<String, dynamic>? ??
-          response.data?['data'] as Map<String, dynamic>? ??
-          {},
+      response.data?['data'] as Map<String, dynamic>? ?? {},
     );
   }
 
@@ -109,9 +99,7 @@ class FinanceRepository {
       data: data,
     );
     return FinanceLedgerModel.fromJson(
-      response.data?['ledger'] as Map<String, dynamic>? ??
-          response.data?['data'] as Map<String, dynamic>? ??
-          {},
+      response.data?['data'] as Map<String, dynamic>? ?? {},
     );
   }
 
