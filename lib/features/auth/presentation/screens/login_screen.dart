@@ -151,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   : 0.0;
               final cardBottom = safeBottom + 32 + keyboardLift;
               final cardTop = height - cardBottom - cardHeight;
-              final heroOverlap = keyboardVisible ? 34.0 : 130.0;
+              final heroOverlap = keyboardVisible ? 34.0 : 190.0;
               final heroBottom = (cardTop - heroOverlap).clamp(0.0, height);
 
               return Stack(
@@ -183,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         image: DecorationImage(
                           image: AssetImage('assets/bg2.jpg'),
                           fit: BoxFit.cover,
-                          alignment: Alignment(0, -0.3),
+                          alignment: Alignment(0, -1.0),
                         ),
                       ),
                       child: Container(
@@ -572,12 +572,11 @@ class _GoogleGlyph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      'G',
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-        color: const Color(0xFF4285F4),
-        fontWeight: FontWeight.w900,
-      ),
+    return Image.asset(
+      'assets/google_logo.png',
+      width: 22,
+      height: 22,
+      fit: BoxFit.contain,
     );
   }
 }
