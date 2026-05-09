@@ -1,5 +1,5 @@
 # Mobile API v1
-Development local path source : ../var/www/html/anggota
+Development local path source : /var/www/html/anggota
 Production base URL: `https://anggota.plnipservices.or.id/api/mobile/v1`
 
 Base path: `/api/mobile/v1`
@@ -63,6 +63,45 @@ Request:
 ```
 
 Response:
+
+```json
+{
+  "access_token": "token-value",
+  "token_type": "Bearer",
+  "user": {
+    "id": 1,
+    "name": "Nama Anggota",
+    "email": "anggota@example.com",
+    "role": { "id": 4, "name": "anggota", "label": "Anggota" },
+    "current_unit_id": 1,
+    "member_context_unit_id": 1,
+    "member": {}
+  }
+}
+```
+
+### `POST /auth/google/token`
+
+Production URL: `https://anggota.plnipservices.or.id/api/mobile/v1/auth/google/token`
+
+Request:
+
+```json
+{
+  "id_token": "google-id-token",
+  "device_name": "android",
+  "server_auth_code": "optional-server-auth-code"
+}
+```
+
+Rules:
+
+- `id_token` wajib diverifikasi server-side terhadap signature Google, issuer, expiry, audience, dan `email_verified`.
+- `device_name` wajib diisi dan dipakai sebagai nama personal access token Sanctum.
+- `server_auth_code` opsional untuk kebutuhan lanjutan; belum diwajibkan untuk login bearer token v1.
+- Hanya user existing yang sudah terdaftar lokal dan diizinkan mengakses mobile app yang bisa login.
+
+Response sukses sama seperti `POST /auth/login`:
 
 ```json
 {
@@ -151,7 +190,7 @@ Multipart form fields:
 
 ### `GET /member/card`
 
-Returns the authenticated member's card payload, including KTA number (nomor anggota), status, unit, QR token, verification URLs, `download_url`, `has_qr`, and `can_download_pdf`.
+Returns the authenticated member's card payload, including KTA/NRA, status, unit, QR token, verification URLs, `download_url`, `has_qr`, and `can_download_pdf`.
 
 If `qr_token` or `valid_until` is empty, the API issues them automatically when the member has a KTA and the member unit can issue KTA.
 
@@ -350,436 +389,6 @@ Request:
 ```
 
 Records mobile app feedback in the activity log.
-
-## News/Berita
-
-The application fetches news and announcements from the public WordPress REST API at https://sppips.org.
-
-### `GET https://sppips.org/wp-json/wp/v2/posts`
-
-Returns published posts from the PLN IP Services website. This endpoint does not require authentication.
-
-**Production URL:** `https://sppips.org/wp-json/wp/v2/posts`
-
-**Optional Query Parameters:**
-
-- `page`: Page number for pagination (default: 1)
-- `per_page`: Number of posts per page (default: 10, max: 100)
-- `_fields`: Comma-separated list of fields to return (recommended for performance)
-
-**Recommended Fields for Mobile:**
-
-```
-?_fields=id,date,title,excerpt,link,categories,tags,featured_media
-```
-
-**Response Example:**
-
-```json
-[
-  {
-    "id": 1234,
-    "date": "2026-05-07T10:30:00",
-    "title": {
-      "rendered": "Rapat Koordinasi Pekerja 2026"
-    },
-    "excerpt": {
-      "rendered": "Dalam rangka meningkatkan solidaritas dan kebersamaan antar anggota..."
-    },
-    "link": "https://sppips.org/2026/05/07/rapat-koordinasi-pekerja-2026",
-    "categories": [5, 12],
-    "tags": [23, 45],
-    "featured_media": 5678
-  }
-]
-```
-
-**Field Descriptions:**
-
-- `id`: Unique post identifier
-- `date`: Publication date (ISO 8601 format)
-- `title.rendered`: Post title with HTML formatting
-- `excerpt.rendered`: Post excerpt/summary with HTML formatting
-- `link`: Full URL to the post on the website
-- `categories`: Array of category IDs
-- `tags`: Array of tag IDs
-- `featured_media`: Featured image ID (can be used to fetch image details)
-
-**Flutter/Dio Implementation Example:**
-
-```dart
-// Define a separate Dio instance for WordPress API (no auth needed)
-final wordpressDio = Dio(BaseOptions(
-  baseUrl: 'https://sppips.org',
-  headers: {'Accept': 'application/json'},
-));
-
-// Fetch latest news
-Future<List<NewsPost>> fetchNews({
-  int page = 1,
-  int perPage = 10,
-}) async {
-  try {
-    final response = await wordpressDio.get(
-      '/wp-json/wp/v2/posts',
-      queryParameters: {
-        'page': page,
-        'per_page': perPage,
-        '_fields': 'id,date,title,excerpt,link,categories,tags,featured_media',
-      },
-    );
-
-    final posts = (response.data as List)
-        .map((json) => NewsPost.fromJson(json))
-        .toList();
-
-    return posts;
-  } on DioException catch (e) {
-    throw Exception('Gagal memuat berita: ${e.message}');
-  }
-}
-
-// Fetch featured image
-Future<String?> fetchFeaturedImage(int mediaId) async {
-  try {
-    final response = await wordpressDio.get(
-      '/wp-json/wp/v2/media/$mediaId',
-      queryParameters: {
-        '_fields': 'source_url,media_details',
-      },
-    );
-
-    return response.data['source_url'] as String?;
-  } catch (e) {
-    return null; // Return null if image fetch fails
-  }
-}
-```
-
-**JSON Serialization Models:**
-
-```dart
-// news_post.dart
-import 'package:json_annotation/json_annotation.dart';
-
-part 'news_post.g.dart';
-
-@JsonSerializable()
-class NewsPost {
-  final int id;
-  final DateTime date;
-  @JsonKey(name: 'title')
-  final NewsTitle title;
-  @JsonKey(name: 'excerpt')
-  final NewsExcerpt excerpt;
-  final String link;
-  final List<int> categories;
-  final List<int> tags;
-  @JsonKey(name: 'featured_media')
-  final int? featuredMedia;
-
-  NewsPost({
-    required this.id,
-    required this.date,
-    required this.title,
-    required this.excerpt,
-    required this.link,
-    required this.categories,
-    required this.tags,
-    this.featuredMedia,
-  });
-
-  factory NewsPost.fromJson(Map<String, dynamic> json) =>
-      _$NewsPostFromJson(json);
-
-  Map<String, dynamic> toJson() => _$NewsPostToJson(this);
-
-  // Helper to get plain text title (removes HTML tags)
-  String get plainTitle {
-    return title.rendered.replaceAll(RegExp(r'<[^>]*>'), '');
-  }
-
-  // Helper to get plain text excerpt (removes HTML tags)
-  String get plainExcerpt {
-    return excerpt.rendered.replaceAll(RegExp(r'<[^>]*>'), '');
-  }
-}
-
-@JsonSerializable()
-class NewsTitle {
-  final String rendered;
-
-  NewsTitle({required this.rendered});
-
-  factory NewsTitle.fromJson(Map<String, dynamic> json) =>
-      _$NewsTitleFromJson(json);
-
-  Map<String, dynamic> toJson() => _$NewsTitleToJson(this);
-}
-
-@JsonSerializable()
-class NewsExcerpt {
-  final String rendered;
-
-  NewsExcerpt({required this.rendered});
-
-  factory NewsExcerpt.fromJson(Map<String, dynamic> json) =>
-      _$NewsExcerptFromJson(json);
-
-  Map<String, dynamic> toJson() => _$NewsExcerptToJson(this);
-}
-
-// Run: flutter pub run build_runner build
-```
-
-**Bloc Pattern for News:**
-
-```dart
-// news_event.dart
-abstract class NewsEvent {}
-
-class NewsFetched extends NewsEvent {
-  final int page;
-  final int perPage;
-
-  NewsFetched({this.page = 1, this.perPage = 10});
-}
-
-class NewsRefreshRequested extends NewsEvent {}
-
-// news_state.dart
-abstract class NewsState {}
-
-class NewsInitial extends NewsState {}
-class NewsLoading extends NewsState {}
-class NewsLoaded extends NewsState {
-  final List<NewsPost> posts;
-  final int currentPage;
-  final bool hasReachedMax;
-
-  NewsLoaded({
-    required this.posts,
-    required this.currentPage,
-    this.hasReachedMax = false,
-  });
-}
-class NewsError extends NewsState {
-  final String message;
-
-  NewsError(this.message);
-}
-
-// news_bloc.dart
-class NewsBloc extends Bloc<NewsEvent, NewsState> {
-  final Dio wordpressDio;
-
-  NewsBloc(this.wordpressDio) : super(NewsInitial()) {
-    on<NewsFetched>(_onNewsFetched);
-    on<NewsRefreshRequested>(_onRefreshRequested);
-  }
-
-  Future<void> _onNewsFetched(
-    NewsFetched event,
-    Emitter<NewsState> emit,
-  ) async {
-    if (state is NewsLoading) return;
-
-    final currentState = state;
-    List<NewsPost> posts = [];
-    int page = event.page;
-
-    if (currentState is NewsLoaded) {
-      posts = currentState.posts;
-      if (currentState.hasReachedMax) return;
-      page = currentState.currentPage + 1;
-    }
-
-    try {
-      final response = await wordpressDio.get(
-        '/wp-json/wp/v2/posts',
-        queryParameters: {
-          'page': page,
-          'per_page': event.perPage,
-          '_fields': 'id,date,title,excerpt,link,categories,tags,featured_media',
-        },
-      );
-
-      final newPosts = (response.data as List)
-          .map((json) => NewsPost.fromJson(json))
-          .toList();
-
-      emit(NewsLoaded(
-        posts: [...posts, ...newPosts],
-        currentPage: page,
-        hasReachedMax: newPosts.length < event.perPage,
-      ));
-    } on DioException catch (e) {
-      emit(NewsError('Gagal memuat berita: ${e.message}'));
-    }
-  }
-
-  Future<void> _onRefreshRequested(
-    NewsRefreshRequested event,
-    Emitter<NewsState> emit,
-  ) async {
-    emit(NewsLoading());
-    add(NewsFetched(page: 1));
-  }
-}
-```
-
-**UI Implementation Example:**
-
-```dart
-class NewsListWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<NewsBloc, NewsState>(
-      builder: (context, state) {
-        if (state is NewsLoading && state is! NewsLoaded) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        if (state is NewsError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 64, color: Colors.red),
-                SizedBox(height: 16),
-                Text(state.message),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => context.read<NewsBloc>().add(NewsRefreshRequested()),
-                  child: Text('Coba Lagi'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (state is NewsLoaded) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<NewsBloc>().add(NewsRefreshRequested());
-            },
-            child: ListView.builder(
-              itemCount: state.posts.length + (state.hasReachedMax ? 0 : 1),
-              itemBuilder: (context, index) {
-                if (index >= state.posts.length) {
-                  // Load more indicator
-                  context.read<NewsBloc>().add(NewsFetched());
-                  return Center(child: CircularProgressIndicator());
-                }
-
-                final post = state.posts[index];
-                return NewsCard(post: post);
-              },
-            ),
-          );
-        }
-
-        return SizedBox.shrink();
-      },
-    );
-  }
-}
-
-class NewsCard extends StatelessWidget {
-  final NewsPost post;
-
-  const NewsCard({super.key, required this.post});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: () {
-          // Open in browser or web view
-          launchUrl(Uri.parse(post.link));
-        },
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                post.plainTitle,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                _formatDate(post.date),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                post.plainExcerpt,
-                style: Theme.of(context).textTheme.bodyMedium,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day} ${_getMonthName(date.month)} ${date.year}';
-  }
-
-  String _getMonthName(int month) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
-    ];
-    return months[month - 1];
-  }
-}
-```
-
-**Error Handling:**
-
-```dart
-// WordPress API may return different error codes
-String getWordPressErrorMessage(DioException error) {
-  switch (error.response?.statusCode) {
-    case 400:
-      return 'Permintaan tidak valid';
-    case 404:
-      return 'Berita tidak ditemukan';
-    case 500:
-      return 'Server sedang bermasalah';
-    default:
-      return 'Gagal memuat berita';
-  }
-}
-```
-
-**Best Practices:**
-
-1. **No Authentication Required**: WordPress API is public, don't send bearer token
-2. **Use Separate Dio Instance**: Create a dedicated Dio instance for WordPress API
-3. **Limit Fields**: Always use `_fields` parameter to reduce response size
-4. **Implement Pagination**: Use `page` and `per_page` for efficient data loading
-5. **Cache Responses**: Implement local caching to reduce API calls
-6. **Handle HTML Content**: Strip HTML tags from `title.rendered` and `excerpt.rendered`
-7. **Error Recovery**: Show retry option when API calls fail
-8. **Image Loading**: Fetch featured images separately and cache them
-
-**Additional WordPress Endpoints:**
-
-- `GET /wp-json/wp/v2/categories` - List all categories
-- `GET /wp-json/wp/v2/tags` - List all tags
-- `GET /wp-json/wp/v2/media/{id}` - Get media/image details
-- `GET /wp-json/wp/v2/posts/{id}` - Get single post details
 
 ## Letters
 
@@ -1186,14 +795,16 @@ Deletes one device token owned by the authenticated user.
 
 ### `POST /auth/google/token` and `POST /auth/microsoft/token`
 
-These routes exist for mobile OAuth readiness and intentionally return `501` until a server-side `id_token` verifier is configured. Do not accept native provider tokens without signature/audience validation.
+`POST /auth/google/token` sudah aktif dengan verifikasi `id_token` server-side.
+
+`POST /auth/microsoft/token` masih berupa stub `501` sampai verifier Microsoft server-side tersedia. Jangan menerima token provider native tanpa validasi signature dan audience.
 
 ## Error Codes
 
 - `401`: missing, invalid, or revoked bearer token.
 - `403`: authenticated but not authorized by current role/policy.
 - `404`: owned resource or linked member profile not found.
-- `501`: endpoint contract exists but provider verifier/worker is not configured yet.
+- `501`: endpoint contract exists but provider verifier/worker is not configured yet, saat ini masih berlaku untuk Microsoft mobile token exchange.
 - `422`: validation error, wrong credentials, no actual profile changes, or missing unit context.
 - `429`: rate limit exceeded.
 
@@ -2126,7 +1737,6 @@ void main() {
 | **Dues** | `GET /dues` | Get member dues |
 | **Notifications** | `GET /notifications` | List notifications |
 | **Letters** | `GET /letters/inbox` | Inbox letters |
-| **News** | `GET https://sppips.org/wp-json/wp/v2/posts` | Get latest news (public, no auth) |
 
 ### Common Response Wrapper
 

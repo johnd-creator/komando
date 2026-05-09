@@ -24,6 +24,9 @@ class MainShell extends StatelessWidget {
     return Scaffold(
       body: IndexedStack(index: selectedIndex, children: _screens),
       bottomNavigationBar: NavigationBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        indicatorColor: const Color(0xFFE7F0FF),
         selectedIndex: selectedIndex,
         onDestinationSelected: (index) {
           notifier.goToTab(index);

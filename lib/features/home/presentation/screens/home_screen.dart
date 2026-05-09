@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
-import '../../../../shared/presentation/widgets/feature_grid_item.dart';
-import '../../../../shared/presentation/widgets/section_title.dart';
 import '../../../../shared/presentation/notifiers/bottom_nav_notifier.dart';
 import '../../data/models/dashboard_model.dart';
 import '../bloc/dashboard_bloc.dart';
@@ -46,9 +44,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 context.push(AppRoutes.feedback);
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.settings_outlined),
-              title: const Text('Pengaturan'),
+            const ListTile(
+              leading: Icon(Icons.settings_outlined),
+              title: Text('Pengaturan'),
               enabled: false,
             ),
             if (hasAdmin)
@@ -95,10 +93,23 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<DashboardBloc>().add(const DashboardRequested());
   }
 
+  String _greetingForNow() {
+    final hour = DateTime.now().hour;
+
+    if (hour >= 4 && hour < 11) {
+      return 'Selamat pagi,';
+    }
+    if (hour >= 11 && hour < 15) {
+      return 'Selamat siang,';
+    }
+    if (hour >= 15 && hour < 18) {
+      return 'Selamat sore,';
+    }
+    return 'Selamat malam,';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       body: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
@@ -111,195 +122,28 @@ class _HomeScreenState extends State<HomeScreen> {
             child: CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
-                    color: colorScheme.primary,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Selamat datang,',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: colorScheme.onPrimary
-                                              .withValues(alpha: 0.82),
-                                        ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    dashboard?.memberName ?? 'Anggota',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(
-                                          color: colorScheme.onPrimary,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Badge(
-                              label: Text(
-                                '${dashboard?.unreadNotifications ?? 0}',
-                              ),
-                              isLabelVisible:
-                                  (dashboard?.unreadNotifications ?? 0) > 0,
-                              child: IconButton.filledTonal(
-                                onPressed: () =>
-                                    BottomNavScope.of(context).goToTab(2),
-                                tooltip: 'Notifikasi',
-                                icon: const Icon(Icons.notifications_outlined),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Card(
-                          color: colorScheme.onPrimary,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: () => context.push('/kta'),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.badge_outlined,
-                                    color: colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text('KTA'),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          dashboard?.ktaNumber ??
-                                              'Memuat nomor KTA',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleSmall
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          dashboard?.unitName ??
-                                              'Memuat unit organisasi',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                                color: colorScheme
-                                                    .onSurfaceVariant,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const Icon(Icons.chevron_right_rounded),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: _HomeHeader(
+                    dashboard: dashboard,
+                    greeting: _greetingForNow(),
                   ),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
                   sliver: SliverList.list(
                     children: [
-                      const SectionTitle(title: 'Akses fitur'),
-                      const SizedBox(height: 8),
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 10,
-                          ),
-                          child: GridView.count(
-                            crossAxisCount: 4,
-                            childAspectRatio: 0.82,
-                            mainAxisSpacing: 4,
-                            crossAxisSpacing: 4,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            children: [
-                              FeatureGridItem(
-                                icon: Icons.badge_outlined,
-                                label: 'KTA',
-                                onTap: () => context.push('/kta'),
-                              ),
-                              FeatureGridItem(
-                                icon: Icons.receipt_long_outlined,
-                                label: 'Iuran',
-                                onTap: () => context.push(AppRoutes.iuran),
-                              ),
-                              FeatureGridItem(
-                                icon: Icons.forum_outlined,
-                                label: 'Aspirasi',
-                                onTap: () =>
-                                    context.push(AppRoutes.aspirations),
-                              ),
-                              FeatureGridItem(
-                                icon: Icons.mail_outline_rounded,
-                                label: 'Surat',
-                                onTap: () => context.push(AppRoutes.letters),
-                              ),
-                              FeatureGridItem(
-                                icon: Icons.campaign_outlined,
-                                label: 'Pengumuman',
-                                onTap: () =>
-                                    context.push(AppRoutes.announcements),
-                              ),
-                              FeatureGridItem(
-                                icon: Icons.account_balance_wallet_outlined,
-                                label: 'Keuangan',
-                                onTap: () => _openKeuangan(context),
-                              ),
-                              FeatureGridItem(
-                                icon: Icons.article_outlined,
-                                label: 'News',
-                                onTap: () => context.push(AppRoutes.news),
-                              ),
-                              FeatureGridItem(
-                                icon: Icons.apps_rounded,
-                                label: 'Lainnya',
-                                onTap: () => _showLainnya(context),
-                              ),
-                            ],
-                          ),
-                        ),
+                      _FeatureAccessPanel(
+                        onKtaTap: () => context.push('/kta'),
+                        onIuranTap: () => context.push(AppRoutes.iuran),
+                        onAspirasiTap: () =>
+                            context.push(AppRoutes.aspirations),
+                        onSuratTap: () => context.push(AppRoutes.letters),
+                        onPengumumanTap: () =>
+                            context.push(AppRoutes.announcements),
+                        onKeuanganTap: () => _openKeuangan(context),
+                        onNewsTap: () => context.push(AppRoutes.news),
+                        onLainnyaTap: () => _showLainnya(context),
                       ),
-                      const SizedBox(height: 24),
-                      const SectionTitle(
-                        title: 'Pengumuman terbaru',
-                        actionLabel: 'Lihat semua',
-                      ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
                       _AnnouncementCard(
                         isLoading: isLoading,
                         announcements: dashboard?.announcements ?? const [],
@@ -320,6 +164,451 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class _HomeHeader extends StatelessWidget {
+  const _HomeHeader({required this.dashboard, required this.greeting});
+
+  final DashboardModel? dashboard;
+  final String greeting;
+
+  @override
+  Widget build(BuildContext context) {
+    final notificationCount = dashboard?.unreadNotifications ?? 0;
+
+    return SizedBox(
+      height: 382,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            bottom: 30,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(28),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  const ColoredBox(color: Color(0xFF075EC4)),
+                  Transform.scale(
+                    scale: 0.82,
+                    child: Image.asset(
+                      'assets/bg-main.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                    ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          const Color(0xFF0069D7).withValues(alpha: 0.78),
+                          const Color(0xFF075EC4).withValues(alpha: 0.70),
+                          const Color(0xFF064FA8).withValues(alpha: 0.82),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Badge(
+                      backgroundColor: const Color(0xFFFFC928),
+                      label: Text('$notificationCount'),
+                      isLabelVisible: notificationCount > 0,
+                      child: IconButton(
+                        onPressed: () => BottomNavScope.of(context).goToTab(2),
+                        tooltip: 'Notifikasi',
+                        style: IconButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.white.withValues(alpha: 0.12),
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.42),
+                          ),
+                        ),
+                        icon: const Icon(Icons.notifications_none_rounded),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: Column(
+                      children: [
+                        Image.asset(
+                          'assets/logo.png',
+                          width: 78,
+                          height: 78,
+                          fit: BoxFit.contain,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '1Komando',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Serikat Pekerja PLN Indonesia Power Services',
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.92),
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          greeting,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(color: Colors.white),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          dashboard?.memberName ?? 'Anggota',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            left: 20,
+            right: 20,
+            bottom: 0,
+            child: _KtaStatusCard(dashboard: dashboard),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _KtaStatusCard extends StatelessWidget {
+  const _KtaStatusCard({required this.dashboard});
+
+  final DashboardModel? dashboard;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = dashboard?.ktaStatus ?? 'Memuat status';
+    final ktaNumber = dashboard?.ktaNumber ?? 'Memuat nomor KTA';
+    final unitName = dashboard?.unitName ?? 'Memuat unit organisasi';
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/kta'),
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF6EABF4), Color(0xFF327BD9)],
+            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.34)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0B4E9D).withValues(alpha: 0.22),
+                blurRadius: 26,
+                offset: const Offset(0, 14),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.13),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.28),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.badge_outlined,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Status KTA',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.84),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(text: status),
+                          const TextSpan(
+                            text: '  •  ',
+                            style: TextStyle(color: Color(0xFFFFC928)),
+                          ),
+                          TextSpan(text: ktaNumber),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      unitName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.74),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white,
+                size: 34,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeatureAccessPanel extends StatelessWidget {
+  const _FeatureAccessPanel({
+    required this.onKtaTap,
+    required this.onIuranTap,
+    required this.onAspirasiTap,
+    required this.onSuratTap,
+    required this.onPengumumanTap,
+    required this.onKeuanganTap,
+    required this.onNewsTap,
+    required this.onLainnyaTap,
+  });
+
+  final VoidCallback onKtaTap;
+  final VoidCallback onIuranTap;
+  final VoidCallback onAspirasiTap;
+  final VoidCallback onSuratTap;
+  final VoidCallback onPengumumanTap;
+  final VoidCallback onKeuanganTap;
+  final VoidCallback onNewsTap;
+  final VoidCallback onLainnyaTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SoftPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Akses fitur',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF111827),
+            ),
+          ),
+          const SizedBox(height: 18),
+          GridView.count(
+            crossAxisCount: 4,
+            childAspectRatio: 0.74,
+            mainAxisSpacing: 14,
+            crossAxisSpacing: 10,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _FeatureTile(
+                icon: Icons.badge_outlined,
+                label: 'KTA Digital',
+                foreground: const Color(0xFF1168CF),
+                background: const Color(0xFFEAF4FF),
+                onTap: onKtaTap,
+              ),
+              _FeatureTile(
+                icon: Icons.payments_outlined,
+                label: 'Iuran',
+                foreground: const Color(0xFF04784A),
+                background: const Color(0xFFEAF7EF),
+                onTap: onIuranTap,
+              ),
+              _FeatureTile(
+                icon: Icons.chat_bubble_outline_rounded,
+                label: 'Aspirasi',
+                foreground: const Color(0xFF5144D9),
+                background: const Color(0xFFF0EEFF),
+                onTap: onAspirasiTap,
+              ),
+              _FeatureTile(
+                icon: Icons.mail_outline_rounded,
+                label: 'Surat',
+                foreground: const Color(0xFFB66A00),
+                background: const Color(0xFFFFF4DF),
+                onTap: onSuratTap,
+              ),
+              _FeatureTile(
+                icon: Icons.notifications_active_outlined,
+                label: 'Alert',
+                foreground: const Color(0xFFC23A2A),
+                background: const Color(0xFFFFECE9),
+                onTap: onPengumumanTap,
+              ),
+              _FeatureTile(
+                icon: Icons.request_quote_outlined,
+                label: 'Keuangan',
+                foreground: const Color(0xFF2E7D32),
+                background: const Color(0xFFEDF7E8),
+                onTap: onKeuanganTap,
+              ),
+              _FeatureTile(
+                icon: Icons.newspaper_rounded,
+                label: 'News',
+                foreground: const Color(0xFFC03F86),
+                background: const Color(0xFFFFEEF7),
+                onTap: onNewsTap,
+              ),
+              _FeatureTile(
+                icon: Icons.more_horiz_rounded,
+                label: 'Lainnya',
+                foreground: const Color(0xFF4B5563),
+                background: const Color(0xFFF4F5F7),
+                onTap: onLainnyaTap,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureTile extends StatelessWidget {
+  const _FeatureTile({
+    required this.icon,
+    required this.label,
+    required this.foreground,
+    required this.background,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color foreground;
+  final Color background;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: foreground.withValues(alpha: 0.08)),
+            ),
+            child: Icon(icon, color: foreground, size: 30),
+          ),
+          const SizedBox(height: 9),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              height: 1.1,
+              color: const Color(0xFF1F2937),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SoftPanel extends StatelessWidget {
+  const _SoftPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE8EEF6)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF14345F).withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
 class _AnnouncementCard extends StatelessWidget {
   const _AnnouncementCard({
     required this.isLoading,
@@ -335,56 +624,160 @@ class _AnnouncementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Card(
-        child: ListTile(
-          leading: SizedBox.square(
-            dimension: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          title: Text('Memuat pengumuman'),
-        ),
-      );
-    }
-
-    if (errorMessage != null) {
-      return Card(
-        child: ListTile(
-          leading: const Icon(Icons.error_outline_rounded),
-          title: Text(errorMessage!),
-          trailing: IconButton(
-            tooltip: 'Coba lagi',
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ),
-      );
-    }
-
-    if (announcements.isEmpty) {
-      return const Card(
-        child: ListTile(
-          leading: Icon(Icons.campaign_outlined),
-          title: Text('Belum ada pengumuman terbaru'),
-          subtitle: Text('Tarik ke bawah untuk memuat ulang.'),
-        ),
-      );
-    }
-
-    return Card(
+    return _SoftPanel(
       child: Column(
         children: [
-          for (final announcement in announcements.take(3))
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Alert terbaru',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.push(AppRoutes.announcements),
+                child: const Text('Lihat semua'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (isLoading)
+            const ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: SizedBox.square(
+                dimension: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              title: Text('Memuat alert'),
+            )
+          else if (errorMessage != null)
             ListTile(
-              leading: const Icon(Icons.campaign_outlined),
-              title: Text(announcement.title),
-              subtitle: announcement.dateLabel.isEmpty
-                  ? null
-                  : Text(announcement.dateLabel),
-              onTap: () => context.push(AppRoutes.announcements),
-            ),
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.error_outline_rounded),
+              title: Text(errorMessage!),
+              trailing: IconButton(
+                tooltip: 'Coba lagi',
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+            )
+          else if (announcements.isEmpty)
+            const ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.campaign_outlined),
+              title: Text('Belum ada alert terbaru'),
+              subtitle: Text('Tarik ke bawah untuk memuat ulang.'),
+            )
+          else
+            for (final entry in announcements.take(3).indexed) ...[
+              _AnnouncementTile(
+                announcement: entry.$2,
+                icon: _announcementIconFor(entry.$1),
+                showDivider: entry.$1 < announcements.take(3).length - 1,
+              ),
+            ],
         ],
       ),
+    );
+  }
+
+  static IconData _announcementIconFor(int index) {
+    return switch (index) {
+      0 => Icons.calendar_month_outlined,
+      1 => Icons.account_balance_wallet_outlined,
+      _ => Icons.description_outlined,
+    };
+  }
+}
+
+class _AnnouncementTile extends StatelessWidget {
+  const _AnnouncementTile({
+    required this.announcement,
+    required this.icon,
+    required this.showDivider,
+  });
+
+  final DashboardAnnouncementModel announcement;
+  final IconData icon;
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: () => context.push(AppRoutes.announcements),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 20,
+                  child: Center(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Color(0xFF0968D7),
+                        shape: BoxShape.circle,
+                      ),
+                      child: SizedBox.square(dimension: 8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAF4FF),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: const Color(0xFF1168CF), size: 27),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        announcement.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF111827),
+                          fontWeight: FontWeight.w800,
+                          height: 1.2,
+                        ),
+                      ),
+                      if (announcement.dateLabel.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          announcement.dateLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: const Color(0xFF667085)),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF8A98AA),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider)
+          const Divider(height: 1, indent: 74, color: Color(0xFFE5EAF1)),
+      ],
     );
   }
 }

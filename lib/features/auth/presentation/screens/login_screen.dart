@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/services.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -25,11 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
   static const _navy = Color(0xFF061B4E);
   static const _muted = Color(0xFF7E90B5);
   static const _fieldBorder = Color(0xFFC9D7EE);
-  static const _googleServerClientId = String.fromEnvironment(
-    'GOOGLE_SERVER_CLIENT_ID',
-    defaultValue:
-        '479016220889-9oiqrc1229fqi057bu9h5im60g8p9shq.apps.googleusercontent.com',
-  );
 
   @override
   void initState() {
@@ -58,54 +51,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _openGoogleSso() async {
-    try {
-      final googleSignIn = GoogleSignIn(
-        scopes: ['email', 'profile'],
-        serverClientId: _googleServerClientId,
-      );
-      await googleSignIn.signOut();
-      final account = await googleSignIn.signIn();
-      if (account == null || !mounted) return;
-
-      final auth = await account.authentication;
-      if (!mounted) return;
-
-      final idToken = auth.idToken;
-      if (idToken == null || idToken.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Google belum mengembalikan id token. Periksa konfigurasi OAuth Android/iOS.',
-            ),
-          ),
-        );
-        return;
-      }
-
-      context.read<AuthBloc>().add(
-        AuthGoogleLoginRequested(
-          idToken: idToken,
-          serverAuthCode: account.serverAuthCode,
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Login Google sedang disiapkan. Silakan gunakan login manual.',
         ),
-      );
-    } on PlatformException catch (e) {
-      if (!mounted) return;
-      final message = switch (e.code) {
-        'sign_in_canceled' => 'Login Google dibatalkan.',
-        'network_error' => 'Koneksi ke Google bermasalah.',
-        'sign_in_failed' =>
-          'Google Sign-In gagal. Periksa OAuth package org.sppips.komando dan SHA-1 debug.',
-        _ => 'Google Sign-In gagal (${e.code}). ${e.message ?? ''}',
-      };
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Google Sign-In gagal: $e')));
-    }
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -181,28 +135,61 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: DecoratedBox(
                       decoration: const BoxDecoration(
                         image: DecorationImage(
-                          image: AssetImage('assets/bg2.jpg'),
+                          image: AssetImage('assets/background.png'),
                           fit: BoxFit.cover,
                           alignment: Alignment(0, -1.0),
                         ),
                       ),
                       child: Container(
                         decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
+                          gradient: RadialGradient(
+                            center: Alignment(0, -0.6),
+                            radius: 0.9,
+                            focal: Alignment(0, -0.6),
+                            focalRadius: 0.1,
                             colors: [
+                              Color(0xFFFFFFFF),
+                              Color(0xF2FFFFFF),
+                              Color(0xE6FFFFFF),
                               Color(0xCCFFFFFF),
                               Color(0x99FFFFFF),
-                              Color(0x33FFFFFF),
+                              Color(0x55FFFFFF),
+                              Color(0x22FFFFFF),
                               Colors.transparent,
-                              Colors.transparent,
-                              Color(0x33FFFFFF),
-                              Color(0x99FFFFFF),
-                              Color(0xFFFFFFFF),
                             ],
-                            stops: [0.0, 0.08, 0.15, 0.25, 0.65, 0.82, 0.94, 1.0],
+                            stops: [
+                              0.0,
+                              0.10,
+                              0.20,
+                              0.35,
+                              0.55,
+                              0.75,
+                              0.90,
+                              1.0,
+                            ],
                           ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: heroBottom - 1,
+                    height: 80,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            const Color(0x33FFFFFF),
+                            const Color(0x88FFFFFF),
+                            const Color(0xCCFFFFFF),
+                            const Color(0xFFFFFFFF),
+                          ],
+                          stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
                         ),
                       ),
                     ),
@@ -213,6 +200,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     right: 24,
                     child: _Header(isShort: isShort),
                   ),
+                  if (!keyboardVisible)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: cardBottom + cardHeight - 20,
+                      height: height * 0.29,
+                      child: IgnorePointer(
+                        child: Image.asset(
+                          'assets/people.png',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
                   AnimatedPositioned(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutCubic,
@@ -296,6 +297,18 @@ class _Header extends StatelessWidget {
           style: textTheme.bodyMedium?.copyWith(
             color: _LoginScreenState._navy,
             fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Akses layanan dan informasi serikat pekerja\nkapan saja, dimana saja secara digital',
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: textTheme.bodySmall?.copyWith(
+            color: _LoginScreenState._navy.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w400,
+            height: 1.4,
           ),
         ),
       ],

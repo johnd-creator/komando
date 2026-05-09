@@ -27,11 +27,17 @@ class AuthRepositoryImpl implements AuthRepository {
     bool enableBiometric = false,
   }) async {
     final normalizedEmail = email.trim();
+    await _clearSavedSession();
+
     final result = await _remoteDataSource.login(
       email: normalizedEmail,
       password: password,
       deviceName: deviceName,
     );
+    if (result.accessToken.isEmpty) {
+      throw Exception('Access token kosong dari server.');
+    }
+
     await _tokenStorage.saveAccessToken(result.accessToken);
     if (rememberAccount || enableBiometric) {
       await _tokenStorage.saveRememberedEmail(normalizedEmail);
@@ -77,10 +83,16 @@ class AuthRepositoryImpl implements AuthRepository {
     required String idToken,
     String? serverAuthCode,
   }) async {
+    await _clearSavedSession();
+
     final result = await _remoteDataSource.googleLogin(
       idToken: idToken,
       serverAuthCode: serverAuthCode,
     );
+    if (result.accessToken.isEmpty) {
+      throw Exception('Access token kosong dari server.');
+    }
+
     await _tokenStorage.saveAccessToken(result.accessToken);
     return result.user;
   }
@@ -97,7 +109,12 @@ class AuthRepositoryImpl implements AuthRepository {
       return null;
     }
 
-    return _remoteDataSource.me();
+    try {
+      return await _remoteDataSource.me();
+    } catch (_) {
+      await _clearSavedSession();
+      return null;
+    }
   }
 
   @override
@@ -108,5 +125,10 @@ class AuthRepositoryImpl implements AuthRepository {
       await _tokenStorage.clearAccessToken();
       await _tokenStorage.clearBiometricEnabled();
     }
+  }
+
+  Future<void> _clearSavedSession() async {
+    await _tokenStorage.clearAccessToken();
+    await _tokenStorage.clearBiometricEnabled();
   }
 }
