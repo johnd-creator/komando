@@ -94,9 +94,10 @@ class _DetailBody extends StatelessWidget {
   final int id;
 
   bool get _canApprove =>
-      userRole.role == 'bendahara' ||
-      userRole.role == 'bendahara_pusat' ||
-      userRole.role == 'super_admin';
+      userRole.normalizedRole == 'bendahara' ||
+      userRole.normalizedRole == 'bendahara_pusat' ||
+      userRole.normalizedRole == 'super_admin' ||
+      userRole.normalizedRole == 'superadmin';
 
   @override
   Widget build(BuildContext context) {

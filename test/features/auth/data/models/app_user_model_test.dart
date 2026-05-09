@@ -1,0 +1,52 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:komando/features/auth/data/models/app_user_model.dart';
+
+void main() {
+  group('AppUserModel', () {
+    test('parses direct user payload with role object', () {
+      final user = AppUserModel.fromJson({
+        'id': 1,
+        'name': 'Super Admin',
+        'email': 'admin@example.com',
+        'role': {'name': 'super_admin', 'label': 'Super Admin'},
+      });
+
+      expect(user.roleName, 'super_admin');
+      expect(user.roleLabel, 'Super Admin');
+      expect(user.canAccessFinance, isTrue);
+    });
+
+    test('parses local /me payload wrapped in user key', () {
+      final user = AppUserModel.fromJson({
+        'user': {
+          'id': 1,
+          'name': 'Super Admin',
+          'email': 'admin@example.com',
+          'role': {'name': 'super_admin', 'label': 'Super Admin'},
+        },
+      });
+
+      expect(user.roleName, 'super_admin');
+      expect(user.canAccessFinance, isTrue);
+    });
+
+    test('parses role_name and role string fallbacks', () {
+      final roleNameUser = AppUserModel.fromJson({
+        'id': 1,
+        'name': 'Super Admin',
+        'email': 'admin@example.com',
+        'role_name': 'super_admin',
+        'role_label': 'Super Admin',
+      });
+      final roleStringUser = AppUserModel.fromJson({
+        'id': 2,
+        'name': 'Super Admin',
+        'email': 'admin2@example.com',
+        'role': 'superadmin',
+      });
+
+      expect(roleNameUser.canAccessFinance, isTrue);
+      expect(roleStringUser.canAccessFinance, isTrue);
+    });
+  });
+}

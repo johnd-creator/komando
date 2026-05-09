@@ -15,18 +15,24 @@ class AppUser extends Equatable {
   final String roleName;
   final String roleLabel;
 
-  bool get hasAdminAccess => roleName != 'anggota';
+  String get normalizedRoleName =>
+      roleName.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+
+  bool get hasAdminAccess => normalizedRoleName != 'anggota';
 
   bool get canAccessFinance {
+    final role = normalizedRoleName;
+
     return const {
       'super_admin',
+      'superadmin',
       'admin_pusat',
       'admin_unit',
       'bendahara',
       'bendahara_pusat',
       'pengurus',
       'pengurus_pusat',
-    }.contains(roleName);
+    }.contains(role);
   }
 
   @override

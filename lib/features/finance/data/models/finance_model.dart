@@ -244,13 +244,17 @@ class UserRoleInfo {
   final int? unitId;
   final bool canViewGlobal;
 
+  String get normalizedRole =>
+      role.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+
   bool get canCreateLedger {
     return const {
       'super_admin',
+      'superadmin',
       'admin_pusat',
       'bendahara',
       'bendahara_pusat',
-    }.contains(role);
+    }.contains(normalizedRole);
   }
 
   factory UserRoleInfo.fromJson(Map<String, dynamic> json) {

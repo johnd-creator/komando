@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 24),
                   sliver: SliverList.list(
                     children: [
                       _FeatureAccessPanel(
@@ -175,54 +175,56 @@ class _HomeHeader extends StatelessWidget {
     final notificationCount = dashboard?.unreadNotifications ?? 0;
 
     return SizedBox(
-      height: 382,
+      height: 392,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(
-            bottom: 30,
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(28),
-              ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  const ColoredBox(color: Color(0xFF075EC4)),
-                  Transform.scale(
-                    scale: 0.82,
-                    child: Image.asset(
-                      'assets/bg-main.png',
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/bg-main.png',
+                  fit: BoxFit.fill,
+                  alignment: Alignment.topCenter,
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        const Color(0xFF0069D7).withValues(alpha: 0.78),
+                        const Color(0xFF075EC4).withValues(alpha: 0.70),
+                        const Color(0xFF064FA8).withValues(alpha: 0.82),
+                      ],
                     ),
                   ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          const Color(0xFF0069D7).withValues(alpha: 0.78),
-                          const Color(0xFF075EC4).withValues(alpha: 0.70),
-                          const Color(0xFF064FA8).withValues(alpha: 0.82),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              height: 74,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF7F9FC),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
               ),
             ),
           ),
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Stack(
                 children: [
-                  Align(
-                    alignment: Alignment.centerRight,
+                  Positioned(
+                    top: 0,
+                    right: 0,
                     child: Badge(
                       backgroundColor: const Color(0xFFFFC928),
                       label: Text('$notificationCount'),
@@ -241,64 +243,69 @@ class _HomeHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Center(
-                    child: Column(
-                      children: [
-                        Image.asset(
-                          'assets/logo.png',
-                          width: 78,
-                          height: 78,
-                          fit: BoxFit.contain,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Column(
+                          children: [
+                            Image.asset(
+                              'assets/logo.png',
+                              width: 78,
+                              height: 78,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '1Komando',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Serikat Pekerja PLN Indonesia Power Services',
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.92),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '1Komando',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
+                      ),
+                      const SizedBox(height: 22),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              greeting,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(color: Colors.white),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              dashboard?.memberName ?? 'Anggota',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Serikat Pekerja PLN Indonesia Power Services',
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.92),
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          greeting,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(color: Colors.white),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          dashboard?.memberName ?? 'Anggota',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -307,7 +314,7 @@ class _HomeHeader extends StatelessWidget {
           Positioned(
             left: 20,
             right: 20,
-            bottom: 0,
+            bottom: 22,
             child: _KtaStatusCard(dashboard: dashboard),
           ),
         ],
@@ -458,12 +465,12 @@ class _FeatureAccessPanel extends StatelessWidget {
               color: const Color(0xFF111827),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           GridView.count(
             crossAxisCount: 4,
-            childAspectRatio: 0.74,
-            mainAxisSpacing: 14,
-            crossAxisSpacing: 10,
+            childAspectRatio: 0.9,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
@@ -497,7 +504,7 @@ class _FeatureAccessPanel extends StatelessWidget {
               ),
               _FeatureTile(
                 icon: Icons.notifications_active_outlined,
-                label: 'Alert',
+                label: 'Pengumuman',
                 foreground: const Color(0xFFC23A2A),
                 background: const Color(0xFFFFECE9),
                 onTap: onPengumumanTap,
@@ -555,23 +562,23 @@ class _FeatureTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 58,
-            height: 58,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               color: background,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: foreground.withValues(alpha: 0.08)),
             ),
-            child: Icon(icon, color: foreground, size: 30),
+            child: Icon(icon, color: foreground, size: 28),
           ),
-          const SizedBox(height: 9),
+          const SizedBox(height: 6),
           Text(
             label,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              height: 1.1,
+              height: 1.05,
               color: const Color(0xFF1F2937),
               fontWeight: FontWeight.w600,
             ),
@@ -591,7 +598,7 @@ class _SoftPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -639,6 +646,14 @@ class _AnnouncementCard extends StatelessWidget {
                 ),
               ),
               TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 onPressed: () => context.push(AppRoutes.announcements),
                 child: const Text('Lihat semua'),
               ),

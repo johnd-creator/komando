@@ -27,7 +27,8 @@ class AuthRemoteDataSource {
 
   Future<AppUserModel> me() async {
     final response = await _apiClient.dio.get<Map<String, dynamic>>('/me');
-    return AppUserModel.fromJson(response.data ?? {});
+    final data = response.data ?? <String, dynamic>{};
+    return AppUserModel.fromJson(data);
   }
 
   Future<({String accessToken, AppUserModel user})> googleLogin({
