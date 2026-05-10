@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 24),
+                  padding: const EdgeInsets.fromLTRB(12, 2, 12, 24),
                   sliver: SliverList.list(
                     children: [
                       _FeatureAccessPanel(
@@ -164,7 +164,7 @@ class _HomeHeader extends StatelessWidget {
               children: [
                 Image.asset(
                   'assets/bg-main.png',
-                  fit: BoxFit.fill,
+                  fit: BoxFit.cover,
                   alignment: Alignment.topCenter,
                 ),
                 DecoratedBox(
@@ -444,7 +444,7 @@ class _FeatureAccessPanel extends StatelessWidget {
               color: const Color(0xFF111827),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           GridView.count(
             crossAxisCount: 4,
             childAspectRatio: 0.9,
