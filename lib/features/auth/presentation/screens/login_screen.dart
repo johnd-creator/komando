@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/constants/api_constants.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -51,15 +53,34 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _openGoogleSso() async {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Login Google sedang disiapkan. Silakan gunakan login manual.',
+    try {
+      final googleSignIn = GoogleSignIn(
+        scopes: const ['email', 'profile'],
+        serverClientId: ApiConstants.googleServerClientId,
+      );
+      await googleSignIn.signOut();
+      final account = await googleSignIn.signIn();
+      if (account == null || !mounted) return;
+
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        throw Exception('Token Google tidak tersedia. Silakan coba lagi.');
+      }
+
+      if (!mounted) return;
+      context.read<AuthBloc>().add(
+        AuthGoogleLoginRequested(
+          idToken: idToken,
+          serverAuthCode: account.serverAuthCode,
         ),
-        duration: Duration(seconds: 3),
-      ),
-    );
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
   }
 
   @override

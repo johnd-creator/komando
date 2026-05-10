@@ -1,5 +1,6 @@
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/json_read.dart';
+import 'package:dio/dio.dart';
 import '../models/dues_model.dart';
 import '../models/finance_model.dart';
 
@@ -60,21 +61,28 @@ class FinanceRepository {
     required double amount,
     required String description,
     int? unitId,
+    String? attachmentPath,
+    String? attachmentName,
   }) async {
+    final data = {
+      'date': date,
+      'finance_category_id': categoryId,
+      'type': type,
+      'amount': amount,
+      'description': description,
+      'organization_unit_id': ?unitId,
+      if (attachmentPath != null && attachmentPath.isNotEmpty)
+        'attachment': await MultipartFile.fromFile(
+          attachmentPath,
+          filename: attachmentName,
+        ),
+    };
+
     final response = await _apiClient.dio.post<Map<String, dynamic>>(
       '/finance/ledgers',
-      data: {
-        'date': date,
-        'finance_category_id': categoryId,
-        'type': type,
-        'amount': amount,
-        'description': description,
-        'organization_unit_id': ?unitId,
-      },
+      data: FormData.fromMap(data),
     );
-    return FinanceLedgerModel.fromJson(
-      response.data?['data'] as Map<String, dynamic>? ?? {},
-    );
+    return FinanceLedgerModel.fromJson(readMap(response.data ?? {}, 'ledger'));
   }
 
   Future<FinanceLedgerModel> updateLedger(
@@ -85,6 +93,8 @@ class FinanceRepository {
     double? amount,
     String? description,
     int? unitId,
+    String? attachmentPath,
+    String? attachmentName,
   }) async {
     final data = <String, dynamic>{};
     if (date != null) data['date'] = date;
@@ -93,14 +103,18 @@ class FinanceRepository {
     if (amount != null) data['amount'] = amount;
     if (description != null) data['description'] = description;
     if (unitId != null) data['organization_unit_id'] = unitId;
+    if (attachmentPath != null && attachmentPath.isNotEmpty) {
+      data['attachment'] = await MultipartFile.fromFile(
+        attachmentPath,
+        filename: attachmentName,
+      );
+    }
 
-    final response = await _apiClient.dio.put<Map<String, dynamic>>(
+    final response = await _apiClient.dio.post<Map<String, dynamic>>(
       '/finance/ledgers/$id',
-      data: data,
+      data: FormData.fromMap({...data, '_method': 'PUT'}),
     );
-    return FinanceLedgerModel.fromJson(
-      response.data?['data'] as Map<String, dynamic>? ?? {},
-    );
+    return FinanceLedgerModel.fromJson(readMap(response.data ?? {}, 'ledger'));
   }
 
   Future<void> deleteLedger(int id) async {

@@ -46,3 +46,36 @@ int readInt(Map<String, dynamic> json, List<String> keys, {int fallback = 0}) {
   }
   return fallback;
 }
+
+double readDouble(
+  Map<String, dynamic> json,
+  List<String> keys, {
+  double fallback = 0,
+}) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      final parsed = double.tryParse(value) ?? _parseLocalizedDouble(value);
+      if (parsed != null) {
+        return parsed;
+      }
+    }
+  }
+  return fallback;
+}
+
+double? _parseLocalizedDouble(String value) {
+  final hasComma = value.contains(',');
+  final hasDot = value.contains('.');
+
+  if (hasComma && hasDot) {
+    return double.tryParse(value.replaceAll('.', '').replaceAll(',', '.'));
+  }
+  if (hasComma) {
+    return double.tryParse(value.replaceAll(',', '.'));
+  }
+  return null;
+}

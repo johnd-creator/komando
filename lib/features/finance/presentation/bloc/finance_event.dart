@@ -59,6 +59,8 @@ class FinanceLedgerCreated extends FinanceEvent {
     required this.amount,
     required this.description,
     this.unitId,
+    this.attachmentPath,
+    this.attachmentName,
   });
 
   final String date;
@@ -67,6 +69,8 @@ class FinanceLedgerCreated extends FinanceEvent {
   final double amount;
   final String description;
   final int? unitId;
+  final String? attachmentPath;
+  final String? attachmentName;
 
   @override
   List<Object?> get props => [
@@ -76,6 +80,8 @@ class FinanceLedgerCreated extends FinanceEvent {
     amount,
     description,
     unitId,
+    attachmentPath,
+    attachmentName,
   ];
 }
 
@@ -88,6 +94,8 @@ class FinanceLedgerUpdated extends FinanceEvent {
     this.amount,
     this.description,
     this.unitId,
+    this.attachmentPath,
+    this.attachmentName,
   });
 
   final int id;
@@ -97,6 +105,8 @@ class FinanceLedgerUpdated extends FinanceEvent {
   final double? amount;
   final String? description;
   final int? unitId;
+  final String? attachmentPath;
+  final String? attachmentName;
 
   @override
   List<Object?> get props => [
@@ -107,6 +117,8 @@ class FinanceLedgerUpdated extends FinanceEvent {
     amount,
     description,
     unitId,
+    attachmentPath,
+    attachmentName,
   ];
 }
 

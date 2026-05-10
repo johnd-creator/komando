@@ -38,9 +38,9 @@ class DashboardSummary {
 
   factory DashboardSummary.fromJson(Map<String, dynamic> json) {
     return DashboardSummary(
-      balance: (json['balance'] as num?)?.toDouble() ?? 0,
-      incomeThisMonth: (json['income_this_month'] as num?)?.toDouble() ?? 0,
-      expenseThisMonth: (json['expense_this_month'] as num?)?.toDouble() ?? 0,
+      balance: readDouble(json, const ['balance']),
+      incomeThisMonth: readDouble(json, const ['income_this_month']),
+      expenseThisMonth: readDouble(json, const ['expense_this_month']),
       pendingCount: readInt(json, const ['pending_count'], fallback: 0),
     );
   }
@@ -96,7 +96,7 @@ class FinanceLedgerModel {
       id: readInt(json, const ['id']),
       date: readString(json, const ['date']),
       type: readString(json, const ['type'], fallback: 'income'),
-      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      amount: readDouble(json, const ['amount']),
       description: readString(json, const ['description'], fallback: ''),
       status: readString(json, const ['status'], fallback: 'draft'),
       category: cat != null ? LedgerCategory.fromJson(cat) : null,
@@ -322,7 +322,9 @@ class LedgerCategoryModel {
       name: readString(json, const ['name']),
       type: readString(json, const ['type'], fallback: 'income'),
       isRecurring: json['is_recurring'] == true,
-      defaultAmount: (json['default_amount'] as num?)?.toDouble(),
+      defaultAmount: json.containsKey('default_amount')
+          ? readDouble(json, const ['default_amount'])
+          : null,
     );
   }
 }

@@ -16,13 +16,25 @@ class ApiErrorHandler {
       case DioExceptionType.connectionError:
         return 'Tidak ada koneksi internet.';
       case DioExceptionType.badResponse:
-        return _handleStatus(error.response?.statusCode);
+        return _handleBadResponse(error.response);
       case DioExceptionType.cancel:
         return 'Permintaan dibatalkan.';
       case DioExceptionType.badCertificate:
       case DioExceptionType.unknown:
         return 'Data gagal dimuat. Silakan coba lagi.';
     }
+  }
+
+  static String _handleBadResponse(Response<dynamic>? response) {
+    final data = response?.data;
+    if (data is Map<String, dynamic>) {
+      final message = data['message'];
+      if (message is String && message.trim().isNotEmpty) {
+        return message;
+      }
+    }
+
+    return _handleStatus(response?.statusCode);
   }
 
   static String _handleStatus(int? statusCode) {

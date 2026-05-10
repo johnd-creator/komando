@@ -56,6 +56,22 @@ void main() {
     });
   });
 
+  group('readDouble', () {
+    test('converts num to double', () {
+      expect(readDouble({'amount': 42}, ['amount']), 42);
+      expect(readDouble({'amount': 42.5}, ['amount']), 42.5);
+    });
+
+    test('parses string values', () {
+      expect(readDouble({'amount': '42.5'}, ['amount']), 42.5);
+      expect(readDouble({'amount': '1.250,75'}, ['amount']), 1250.75);
+    });
+
+    test('returns fallback when key missing', () {
+      expect(readDouble({}, ['amount'], fallback: -1), -1);
+    });
+  });
+
   group('readMap', () {
     test('returns map value', () {
       final json = {

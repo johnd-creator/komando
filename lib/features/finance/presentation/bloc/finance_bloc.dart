@@ -130,7 +130,8 @@ class FinanceBloc extends Bloc<FinanceEvent, FinanceState> {
     emit(const FinanceLoading(message: 'Memuat form...'));
     try {
       final categories = await _repository.getCategories();
-      final units = await _repository.getUnits();
+      final dashboard = await _repository.getDashboard();
+      final units = await _safeGetUnits(dashboard);
 
       FinanceLedgerModel? ledger;
       if (event.editId != null) {
@@ -165,6 +166,8 @@ class FinanceBloc extends Bloc<FinanceEvent, FinanceState> {
         amount: event.amount,
         description: event.description,
         unitId: event.unitId,
+        attachmentPath: event.attachmentPath,
+        attachmentName: event.attachmentName,
       );
       emit(const FinanceFormSuccess(isEdit: false));
     } catch (error) {
@@ -186,6 +189,8 @@ class FinanceBloc extends Bloc<FinanceEvent, FinanceState> {
         amount: event.amount,
         description: event.description,
         unitId: event.unitId,
+        attachmentPath: event.attachmentPath,
+        attachmentName: event.attachmentName,
       );
       emit(const FinanceFormSuccess(isEdit: true));
     } catch (error) {

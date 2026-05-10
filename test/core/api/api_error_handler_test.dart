@@ -43,6 +43,20 @@ void main() {
       expect(message, 'Anda tidak memiliki akses ke fitur ini.');
     });
 
+    test('bad response uses backend message when available', () {
+      final error = DioException(
+        type: DioExceptionType.badResponse,
+        response: Response(
+          requestOptions: RequestOptions(),
+          statusCode: 403,
+          data: {'message': 'Anda tidak memiliki akses kelola unit tersebut.'},
+        ),
+        requestOptions: RequestOptions(),
+      );
+      final message = ApiErrorHandler.getMessage(error);
+      expect(message, 'Anda tidak memiliki akses kelola unit tersebut.');
+    });
+
     test('404 returns not found message', () {
       final error = DioException(
         type: DioExceptionType.badResponse,

@@ -75,31 +75,20 @@ AuthBloc _buildBloc(_FakeAuthRepository repo) {
 }
 
 void main() {
-  testWidgets(
-    'Google button shows temporary message without dispatching login',
-    (tester) async {
-      final repo = _FakeAuthRepository();
+  testWidgets('Google button is available on login screen', (tester) async {
+    final repo = _FakeAuthRepository();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: BlocProvider(
-            create: (_) => _buildBloc(repo),
-            child: const LoginScreen(),
-          ),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider(
+          create: (_) => _buildBloc(repo),
+          child: const LoginScreen(),
         ),
-      );
-      await tester.pump();
+      ),
+    );
+    await tester.pump();
 
-      await tester.tap(find.text('Masuk dengan Google'));
-      await tester.pump();
-
-      expect(
-        find.text(
-          'Login Google sedang disiapkan. Silakan gunakan login manual.',
-        ),
-        findsOneWidget,
-      );
-      expect(repo.googleLoginCallCount, 0);
-    },
-  );
+    expect(find.text('Masuk dengan Google'), findsOneWidget);
+    expect(repo.googleLoginCallCount, 0);
+  });
 }
