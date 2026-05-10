@@ -11,7 +11,7 @@ class AppUserModel extends AppUser {
 
   factory AppUserModel.fromJson(Map<String, dynamic> json) {
     final userJson = _readUserJson(json);
-    final roleJson = userJson['role'];
+    final roleJson = _readRoleJson(userJson);
     final roleMap = roleJson is Map<String, dynamic> ? roleJson : null;
     final roleName = _readString(roleMap ?? userJson, const [
       'name',
@@ -34,20 +34,38 @@ class AppUserModel extends AppUser {
   }
 
   static Map<String, dynamic> _readUserJson(Map<String, dynamic> json) {
-    final data = json['data'];
-    final user = json['user'];
+    var current = json;
 
-    if (user is Map<String, dynamic>) {
-      return user;
-    }
-    if (data is Map<String, dynamic>) {
-      final dataUser = data['user'];
-      if (dataUser is Map<String, dynamic>) {
-        return dataUser;
+    for (var i = 0; i < 4; i++) {
+      final user = current['user'];
+      final data = current['data'];
+
+      if (user is Map<String, dynamic>) {
+        current = user;
+        continue;
       }
-      return data;
+      if (data is Map<String, dynamic>) {
+        current = data;
+        continue;
+      }
+      break;
     }
-    return json;
+
+    return current;
+  }
+
+  static Object? _readRoleJson(Map<String, dynamic> json) {
+    final role = json['role'];
+    if (role != null) {
+      return role;
+    }
+
+    final roles = json['roles'];
+    if (roles is List && roles.isNotEmpty) {
+      return roles.first;
+    }
+
+    return null;
   }
 
   static String _readString(

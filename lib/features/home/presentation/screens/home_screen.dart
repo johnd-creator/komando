@@ -65,28 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openKeuangan(BuildContext context) {
-    final authState = context.read<AuthBloc>().state;
-    final canAccessFinance =
-        authState is AuthAuthenticated && authState.user.canAccessFinance;
-
-    if (canAccessFinance) {
-      context.push(AppRoutes.keuangan);
-      return;
-    }
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Keuangan organisasi hanya tersedia untuk pengurus atau bendahara.',
-          ),
-          action: SnackBarAction(
-            label: 'Iuran Saya',
-            onPressed: () => context.push(AppRoutes.iuran),
-          ),
-        ),
-      );
+    context.push(AppRoutes.keuangan);
   }
 
   Future<void> _refresh() async {

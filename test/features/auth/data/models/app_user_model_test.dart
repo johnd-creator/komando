@@ -30,6 +30,36 @@ void main() {
       expect(user.canAccessFinance, isTrue);
     });
 
+    test('parses JsonResource style user.data wrapper', () {
+      final user = AppUserModel.fromJson({
+        'user': {
+          'data': {
+            'id': 1,
+            'name': 'Super Admin',
+            'email': 'admin@example.com',
+            'role': {'name': 'super_admin', 'label': 'Super Admin'},
+          },
+        },
+      });
+
+      expect(user.roleName, 'super_admin');
+      expect(user.canAccessFinance, isTrue);
+    });
+
+    test('parses roles array fallback', () {
+      final user = AppUserModel.fromJson({
+        'id': 1,
+        'name': 'Super Admin',
+        'email': 'admin@example.com',
+        'roles': [
+          {'name': 'super_admin', 'label': 'Super Admin'},
+        ],
+      });
+
+      expect(user.roleName, 'super_admin');
+      expect(user.canAccessFinance, isTrue);
+    });
+
     test('parses role_name and role string fallbacks', () {
       final roleNameUser = AppUserModel.fromJson({
         'id': 1,
