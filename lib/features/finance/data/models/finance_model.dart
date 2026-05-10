@@ -61,6 +61,7 @@ class FinanceLedgerModel {
     this.approvedAt,
     this.attachmentPath,
     this.rejectionReason,
+    this.permissions = const LedgerPermissions(),
   });
 
   final int id;
@@ -76,6 +77,7 @@ class FinanceLedgerModel {
   final String? approvedAt;
   final String? attachmentPath;
   final String? rejectionReason;
+  final LedgerPermissions permissions;
 
   int? get categoryId => category?.id;
   int? get unitId => unit?.id;
@@ -107,6 +109,33 @@ class FinanceLedgerModel {
         'rejected_reason',
         'rejection_reason',
       ], fallback: ''),
+      permissions: LedgerPermissions.fromJson(readMap(json, 'permissions')),
+    );
+  }
+}
+
+class LedgerPermissions {
+  const LedgerPermissions({
+    this.canView = false,
+    this.canUpdate = false,
+    this.canDelete = false,
+    this.canApprove = false,
+    this.canReject = false,
+  });
+
+  final bool canView;
+  final bool canUpdate;
+  final bool canDelete;
+  final bool canApprove;
+  final bool canReject;
+
+  factory LedgerPermissions.fromJson(Map<String, dynamic> json) {
+    return LedgerPermissions(
+      canView: json['view'] == true,
+      canUpdate: json['update'] == true,
+      canDelete: json['delete'] == true,
+      canApprove: json['approve'] == true,
+      canReject: json['reject'] == true,
     );
   }
 }
@@ -220,6 +249,12 @@ class FinanceUnitsResponse {
   final List<FinanceUnitModel> units;
   final int accessibleCount;
   final String role;
+
+  String get normalizedRole =>
+      role.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+
+  bool get canSelectUnitForWrite =>
+      const {'super_admin', 'superadmin'}.contains(normalizedRole);
 
   factory FinanceUnitsResponse.fromJson(Map<String, dynamic> json) {
     return FinanceUnitsResponse(

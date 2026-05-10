@@ -46,11 +46,7 @@ class LedgerDetailScreen extends StatelessWidget {
       },
       builder: (context, state) {
         if (state is FinanceLedgerDetailLoaded) {
-          return _DetailBody(
-            ledger: state.ledger,
-            userRole: state.userRole,
-            id: id,
-          );
+          return _DetailBody(ledger: state.ledger, id: id);
         }
 
         return Scaffold(
@@ -83,21 +79,18 @@ class LedgerDetailScreen extends StatelessWidget {
 }
 
 class _DetailBody extends StatelessWidget {
-  const _DetailBody({
-    required this.ledger,
-    required this.userRole,
-    required this.id,
-  });
+  const _DetailBody({required this.ledger, required this.id});
 
   final FinanceLedgerModel ledger;
-  final UserRoleInfo userRole;
   final int id;
 
-  bool get _canApprove =>
-      userRole.normalizedRole == 'bendahara' ||
-      userRole.normalizedRole == 'bendahara_pusat' ||
-      userRole.normalizedRole == 'super_admin' ||
-      userRole.normalizedRole == 'superadmin';
+  bool get _canApprove => ledger.permissions.canApprove;
+
+  bool get _canReject => ledger.permissions.canReject;
+
+  bool get _canUpdate => ledger.permissions.canUpdate;
+
+  bool get _canDelete => ledger.permissions.canDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -159,60 +152,67 @@ class _DetailBody extends StatelessWidget {
                 ),
               ),
             ),
-            if (ledger.status == 'submitted' && _canApprove) ...[
+            if (ledger.status == 'submitted' &&
+                (_canApprove || _canReject)) ...[
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => context.read<FinanceBloc>().add(
-                        FinanceLedgerApproved(id),
-                      ),
-                      icon: const Icon(Icons.check),
-                      label: const Text('Setujui'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.green,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showRejectDialog(context),
-                      icon: const Icon(Icons.close),
-                      label: const Text('Tolak'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
+                  if (_canApprove)
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () => context.read<FinanceBloc>().add(
+                          FinanceLedgerApproved(id),
+                        ),
+                        icon: const Icon(Icons.check),
+                        label: const Text('Setujui'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
                       ),
                     ),
-                  ),
+                  if (_canApprove && _canReject) const SizedBox(width: 12),
+                  if (_canReject)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showRejectDialog(context),
+                        icon: const Icon(Icons.close),
+                        label: const Text('Tolak'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () =>
-                        context.push(AppRoutes.financeLedgerEdit(id)),
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Edit'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _confirmDelete(context),
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Hapus'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
+            if (_canUpdate || _canDelete) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  if (_canUpdate)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            context.push(AppRoutes.financeLedgerEdit(id)),
+                        icon: const Icon(Icons.edit_outlined),
+                        label: const Text('Edit'),
+                      ),
                     ),
-                  ),
-                ),
-              ],
-            ),
+                  if (_canUpdate && _canDelete) const SizedBox(width: 12),
+                  if (_canDelete)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _confirmDelete(context),
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Hapus'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
             if (ledger.status == 'approved' && _canApprove) ...[
               const SizedBox(height: 8),
               Text(

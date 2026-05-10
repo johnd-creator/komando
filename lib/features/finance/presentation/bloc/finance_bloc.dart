@@ -44,11 +44,8 @@ class FinanceBloc extends Bloc<FinanceEvent, FinanceState> {
     emit(const FinanceLoading(message: 'Memuat data keuangan...'));
     try {
       final dashboard = await _repository.getDashboard();
-      final units = await _repository.getUnits();
-      final ledgerPage = await _repository.getLedgers(
-        page: 1,
-        perPage: _perPage,
-      );
+      final units = await _safeGetUnits(dashboard);
+      final ledgerPage = await _safeGetLedgerPage(dashboard);
 
       emit(
         FinanceKeuanganLoaded(
@@ -61,6 +58,35 @@ class FinanceBloc extends Bloc<FinanceEvent, FinanceState> {
       );
     } catch (error) {
       emit(FinanceFailure(ApiErrorHandler.getMessage(error)));
+    }
+  }
+
+  Future<FinanceUnitsResponse> _safeGetUnits(
+    FinanceDashboardModel dashboard,
+  ) async {
+    try {
+      return await _repository.getUnits();
+    } catch (_) {
+      return FinanceUnitsResponse(
+        units: const [],
+        accessibleCount: 0,
+        role: dashboard.userRole.role,
+      );
+    }
+  }
+
+  Future<FinanceLedgerPageModel> _safeGetLedgerPage(
+    FinanceDashboardModel dashboard,
+  ) async {
+    try {
+      return await _repository.getLedgers(page: 1, perPage: _perPage);
+    } catch (_) {
+      return FinanceLedgerPageModel(
+        items: dashboard.recentTransactions,
+        currentPage: 1,
+        lastPage: 1,
+        total: dashboard.recentTransactions.length,
+      );
     }
   }
 

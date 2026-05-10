@@ -27,6 +27,7 @@ class _LedgerFormScreenState extends State<LedgerFormScreen> {
   int? _categoryId;
   int? _unitId;
   String _type = 'income';
+  bool _prefilled = false;
 
   @override
   void initState() {
@@ -45,12 +46,14 @@ class _LedgerFormScreenState extends State<LedgerFormScreen> {
   }
 
   void _prefill(FinanceLedgerModel ledger) {
-    _dateCtrl.text = ledger.date;
-    _amountCtrl.text = ledger.amount.toStringAsFixed(0);
-    _descCtrl.text = ledger.description;
-    _type = ledger.type;
-    _categoryId = ledger.categoryId;
-    _unitId = ledger.unitId;
+    setState(() {
+      _dateCtrl.text = ledger.date;
+      _amountCtrl.text = ledger.amount.toStringAsFixed(0);
+      _descCtrl.text = ledger.description;
+      _type = ledger.type;
+      _categoryId = ledger.categoryId;
+      _unitId = ledger.unitId;
+    });
   }
 
   void _submit() {
@@ -147,9 +150,12 @@ class _LedgerFormScreenState extends State<LedgerFormScreen> {
           final categories = state.categories
               .where((c) => c.type == _type)
               .toList();
-          final units = state.units.units;
+          final units = state.units.canSelectUnitForWrite
+              ? state.units.units
+              : const <FinanceUnitModel>[];
 
-          if (!state.isEditMode && state.ledger != null) {
+          if (!_prefilled && state.isEditMode && state.ledger != null) {
+            _prefilled = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _prefill(state.ledger!);
             });

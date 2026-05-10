@@ -448,8 +448,8 @@ All endpoints are role/policy gated and non-global users are scoped to their act
 
 | Role | Can Access Units | Notes |
 |------|------------------|-------|
-| `bendahara` | Own unit + Pusat unit only | Cannot see other units |
-| `bendahara_pusat` | All units | Can filter by unit |
+| `bendahara` | Own unit + Pusat unit only | Full control for own unit, read-only for Pusat |
+| `bendahara_pusat` | All units | Full control for Pusat, read-only for other units |
 | `admin_pusat`, `pengurus_pusat` | All units | Read-only access |
 | `admin_unit`, `pengurus` | Own unit only | Read-only access |
 | `super_admin` | All units | Full access |
