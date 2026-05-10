@@ -179,8 +179,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
 
 bool _isUnavailableMessage(String message) {
   final normalized = message.toLowerCase();
-  return normalized.contains('tidak memiliki akses') ||
-      normalized.contains('data tidak ditemukan');
+  return normalized.contains('data tidak ditemukan');
 }
 
 class _FinanceUnavailable extends StatelessWidget {
