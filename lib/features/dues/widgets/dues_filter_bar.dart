@@ -4,7 +4,6 @@ class DuesFilterBar extends StatelessWidget {
   final Map<String, String> currentFilters;
   final Function(Map<String, String>) onFilterChanged;
 
-  // ignore: use_super_parameters
   const DuesFilterBar({
     super.key,
     required this.currentFilters,

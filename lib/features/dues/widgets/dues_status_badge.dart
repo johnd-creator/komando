@@ -13,18 +13,18 @@ class DuesStatusBadge extends StatelessWidget {
 
     switch (status.toLowerCase()) {
       case 'paid':
-        backgroundColor = Colors.green.withValues(alpha: 0.1);
+        backgroundColor = Colors.green.withOpacity(0.1);
         textColor = Colors.green;
         label = 'LUNAS';
         break;
       case 'waived':
-        backgroundColor = Colors.blue.withValues(alpha: 0.1);
+        backgroundColor = Colors.blue.withOpacity(0.1);
         textColor = Colors.blue;
         label = 'BEBAS';
         break;
       case 'unpaid':
       default:
-        backgroundColor = Colors.red.withValues(alpha: 0.1);
+        backgroundColor = Colors.red.withOpacity(0.1);
         textColor = Colors.red;
         label = 'BELUM LUNAS';
         break;
