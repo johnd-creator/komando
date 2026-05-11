@@ -4,7 +4,6 @@ class DuesMassPayDialog extends StatefulWidget {
   final int count;
   final double defaultAmount;
 
-  // ignore: use_super_parameters
   const DuesMassPayDialog({
     super.key,
     required this.count,

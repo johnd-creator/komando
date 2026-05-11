@@ -18,10 +18,10 @@ class DuesSummaryCard extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+        color: Theme.of(context).primaryColor.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+          color: Theme.of(context).primaryColor.withOpacity(0.2),
         ),
       ),
       child: Column(
@@ -63,7 +63,7 @@ class DuesSummaryCard extends StatelessWidget {
                     (p) => Chip(
                       label: Text(p, style: const TextStyle(fontSize: 12)),
                       padding: EdgeInsets.zero,
-                      backgroundColor: Colors.red.withValues(alpha: 0.1),
+                      backgroundColor: Colors.red.withOpacity(0.1),
                       side: BorderSide.none,
                     ),
                   )

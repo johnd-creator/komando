@@ -6,7 +6,6 @@ class DuesCard extends StatelessWidget {
   final DuesPayment payment;
   final VoidCallback? onTap;
 
-  // ignore: use_super_parameters
   const DuesCard({super.key, required this.payment, this.onTap});
 
   @override

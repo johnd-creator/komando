@@ -7,7 +7,6 @@ import '../widgets/dues_card.dart';
 import '../widgets/dues_summary_card.dart';
 
 class MyDuesScreen extends StatefulWidget {
-  // ignore: use_super_parameters
   const MyDuesScreen({super.key});
 
   @override
