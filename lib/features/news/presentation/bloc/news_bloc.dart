@@ -15,14 +15,23 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
   final NewsRepository _repository;
 
   Future<void> _onFetched(NewsFetched event, Emitter<NewsState> emit) async {
-    emit(const NewsLoading());
+    final cached = await _repository.getCachedPosts();
+    final hasCached = cached.isNotEmpty;
+    if (hasCached) {
+      emit(NewsLoaded(items: cached, page: 1, hasMore: true));
+    } else {
+      emit(const NewsLoading());
+    }
+
     try {
       final items = await _repository.getPosts(page: 1, perPage: _perPage);
       emit(
         NewsLoaded(items: items, page: 1, hasMore: items.length >= _perPage),
       );
     } catch (error) {
-      emit(const NewsFailure('Gagal memuat berita.'));
+      if (!hasCached) {
+        emit(const NewsFailure('Gagal memuat berita.'));
+      }
     }
   }
 

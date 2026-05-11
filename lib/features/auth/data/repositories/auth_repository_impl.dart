@@ -1,3 +1,4 @@
+import '../../../../core/cache/app_cache.dart';
 import '../../../../core/security/biometric_auth_service.dart';
 import '../../../../core/security/token_storage.dart';
 import '../../domain/entities/app_user.dart';
@@ -6,17 +7,20 @@ import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  const AuthRepositoryImpl({
+  AuthRepositoryImpl({
     required AuthRemoteDataSource remoteDataSource,
     required TokenStorage tokenStorage,
     required BiometricAuthService biometricAuthService,
+    AppCache? appCache,
   }) : _remoteDataSource = remoteDataSource,
        _tokenStorage = tokenStorage,
-       _biometricAuthService = biometricAuthService;
+       _biometricAuthService = biometricAuthService,
+       _appCache = appCache ?? AppCache();
 
   final AuthRemoteDataSource _remoteDataSource;
   final TokenStorage _tokenStorage;
   final BiometricAuthService _biometricAuthService;
+  final AppCache _appCache;
 
   @override
   Future<AppUser> login({
@@ -124,11 +128,13 @@ class AuthRepositoryImpl implements AuthRepository {
     } finally {
       await _tokenStorage.clearAccessToken();
       await _tokenStorage.clearBiometricEnabled();
+      await _appCache.clearUserScopedCache();
     }
   }
 
   Future<void> _clearSavedSession() async {
     await _tokenStorage.clearAccessToken();
     await _tokenStorage.clearBiometricEnabled();
+    await _appCache.clearUserScopedCache();
   }
 }

@@ -58,6 +58,20 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   build_runner: ^2.10.4
   json_serializable: ^6.11.3
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.6
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/sppips.png"
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/sppips.png
+  android_12:
+    image: assets/sppips.png
+    color: "#FFFFFF"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -75,8 +89,10 @@ flutter:
     - assets/bg2.jpg
     - assets/background.png
     - assets/people.png
+    - assets/sp_ppl.png
     - assets/logo.png
     - assets/bg-main.png
+    - assets/bg-asset.png
     - assets/google_logo.png
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -24,6 +24,17 @@ class NewsModel {
   final String imageUrl;
   final String date;
 
+  factory NewsModel.fromCache(Map<String, dynamic> json) {
+    return NewsModel(
+      id: json['id'] as int? ?? 0,
+      title: json['title'] as String? ?? '',
+      excerpt: json['excerpt'] as String? ?? '',
+      link: json['link'] as String? ?? '',
+      imageUrl: json['image_url'] as String? ?? '',
+      date: json['date'] as String? ?? '',
+    );
+  }
+
   factory NewsModel.fromJson(Map<String, dynamic> json) {
     final title = json['title'] as Map<String, dynamic>?;
     final excerpt = json['excerpt'] as Map<String, dynamic>?;
@@ -38,6 +49,17 @@ class NewsModel {
       imageUrl: _extractImage(media),
       date: _formatDate(json['date'] as String? ?? ''),
     );
+  }
+
+  Map<String, dynamic> toCache() {
+    return {
+      'id': id,
+      'title': title,
+      'excerpt': excerpt,
+      'link': link,
+      'image_url': imageUrl,
+      'date': date,
+    };
   }
 
   static String _extractImage(List<dynamic>? media) {

@@ -31,6 +31,7 @@ import 'features/news/data/repositories/news_repository.dart';
 import 'features/news/data/wordpress_client.dart';
 import 'features/finance/data/repositories/finance_repository.dart';
 import 'features/admin/data/repositories/admin_repository.dart';
+import 'features/dues/repository/dues_repository.dart';
 import 'shared/presentation/notifiers/bottom_nav_notifier.dart';
 
 void main() {
@@ -45,6 +46,7 @@ void main() {
   final newsRepository = NewsRepository(WordpressClient());
   final financeRepository = FinanceRepository(apiClient);
   final adminRepository = AdminRepository(apiClient);
+  final duesRepository = DuesRepository(apiClient.dio);
   final bottomNavNotifier = BottomNavNotifier();
   final authRepository = AuthRepositoryImpl(
     remoteDataSource: AuthRemoteDataSource(apiClient),
@@ -68,6 +70,7 @@ void main() {
     newsRepository: newsRepository,
     financeRepository: financeRepository,
     adminRepository: adminRepository,
+    duesRepository: duesRepository,
   );
 
   runApp(

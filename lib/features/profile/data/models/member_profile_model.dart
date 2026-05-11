@@ -21,6 +21,19 @@ class MemberProfileModel {
   final String memberNumber;
   final String? photoUrl;
 
+  factory MemberProfileModel.fromCache(Map<String, dynamic> json) {
+    return MemberProfileModel(
+      name: readString(json, const ['name'], fallback: 'Anggota'),
+      email: readString(json, const ['email']),
+      phone: readString(json, const ['phone']),
+      address: readString(json, const ['address']),
+      unit: readString(json, const ['unit']),
+      status: readString(json, const ['status']),
+      memberNumber: readString(json, const ['member_number']),
+      photoUrl: json['photo_url'] as String?,
+    );
+  }
+
   factory MemberProfileModel.fromJson(Map<String, dynamic> json) {
     final data = readMap(json, 'data').isNotEmpty
         ? readMap(json, 'data')
@@ -32,8 +45,8 @@ class MemberProfileModel {
     final unit = readMap(member, 'organization_unit').isNotEmpty
         ? readMap(member, 'organization_unit')
         : readMap(data, 'unit').isNotEmpty
-            ? readMap(data, 'unit')
-            : readMap(member, 'unit');
+        ? readMap(data, 'unit')
+        : readMap(member, 'unit');
 
     return MemberProfileModel(
       name: readString(member, const [
@@ -64,5 +77,18 @@ class MemberProfileModel {
       ], fallback: '-'),
       photoUrl: member['photo_url'] as String?,
     );
+  }
+
+  Map<String, dynamic> toCache() {
+    return {
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'address': address,
+      'unit': unit,
+      'status': status,
+      'member_number': memberNumber,
+      'photo_url': photoUrl,
+    };
   }
 }

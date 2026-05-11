@@ -16,11 +16,19 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfileRequested event,
     Emitter<ProfileState> emit,
   ) async {
-    emit(const ProfileLoading());
+    final cached = await _repository.getCachedProfile();
+    if (cached != null) {
+      emit(ProfileLoaded(cached));
+    } else {
+      emit(const ProfileLoading());
+    }
+
     try {
       emit(ProfileLoaded(await _repository.getProfile()));
     } catch (error) {
-      emit(ProfileFailure(ApiErrorHandler.getMessage(error)));
+      if (cached == null) {
+        emit(ProfileFailure(ApiErrorHandler.getMessage(error)));
+      }
     }
   }
 }

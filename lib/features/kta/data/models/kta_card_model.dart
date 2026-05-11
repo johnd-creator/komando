@@ -19,6 +19,18 @@ class KtaCardModel {
   final bool hasQr;
   final bool canDownloadPdf;
 
+  factory KtaCardModel.fromCache(Map<String, dynamic> json) {
+    return KtaCardModel(
+      name: readString(json, const ['name'], fallback: 'Anggota'),
+      number: readString(json, const ['number']),
+      status: readString(json, const ['status']),
+      unit: readString(json, const ['unit']),
+      validUntil: readString(json, const ['valid_until']),
+      hasQr: json['has_qr'] == true,
+      canDownloadPdf: json['can_download_pdf'] == true,
+    );
+  }
+
   factory KtaCardModel.fromJson(Map<String, dynamic> json) {
     final data = readMap(json, 'data').isNotEmpty
         ? readMap(json, 'data')
@@ -48,5 +60,17 @@ class KtaCardModel {
       hasQr: data['has_qr'] == true,
       canDownloadPdf: data['can_download_pdf'] == true,
     );
+  }
+
+  Map<String, dynamic> toCache() {
+    return {
+      'name': name,
+      'number': number,
+      'status': status,
+      'unit': unit,
+      'valid_until': validUntil,
+      'has_qr': hasQr,
+      'can_download_pdf': canDownloadPdf,
+    };
   }
 }

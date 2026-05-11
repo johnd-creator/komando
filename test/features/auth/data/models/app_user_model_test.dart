@@ -78,5 +78,17 @@ void main() {
       expect(roleNameUser.canAccessFinance, isTrue);
       expect(roleStringUser.canAccessFinance, isTrue);
     });
+
+    test('parses member context unit fallback', () {
+      final user = AppUserModel.fromJson({
+        'id': 1,
+        'name': 'Bendahara Unit',
+        'email': 'bendahara@example.com',
+        'role': {'name': 'bendahara', 'label': 'Bendahara'},
+        'member_context_unit_id': 7,
+      });
+
+      expect(user.currentUnitId, 7);
+    });
   });
 }

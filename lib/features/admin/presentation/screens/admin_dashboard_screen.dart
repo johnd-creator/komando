@@ -151,6 +151,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onTap: () => context.push(AppRoutes.adminMembers),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.payments_outlined),
+                  title: const Text('Kelola Iuran'),
+                  subtitle: const Text('Checklist & tagihan iuran bulanan'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(AppRoutes.adminDues),
+                ),
+                ListTile(
                   leading: const Icon(Icons.account_balance_wallet),
                   title: const Text('Keuangan'),
                   subtitle: const Text('Lihat transaksi keuangan'),

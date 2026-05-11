@@ -163,8 +163,8 @@ class _HomeHeader extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 Image.asset(
-                  'assets/bg-main.png',
-                  fit: BoxFit.cover,
+                  'assets/bg-asset.png',
+                  fit: BoxFit.contain,
                   alignment: Alignment.topCenter,
                 ),
                 DecoratedBox(

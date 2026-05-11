@@ -16,13 +16,22 @@ class KtaBloc extends Bloc<KtaEvent, KtaState> {
     KtaCardRequested event,
     Emitter<KtaState> emit,
   ) async {
-    emit(const KtaLoading());
+    final cachedCard = await _repository.getCachedCard();
+    final cachedQrBytes = await _repository.getCachedQrImage();
+    if (cachedCard != null) {
+      emit(KtaLoaded(card: cachedCard, qrBytes: cachedQrBytes));
+    } else {
+      emit(const KtaLoading());
+    }
+
     try {
       final card = await _repository.getCard();
       final qrBytes = card.hasQr ? await _repository.getQrImage() : null;
       emit(KtaLoaded(card: card, qrBytes: qrBytes));
     } catch (error) {
-      emit(KtaFailure(ApiErrorHandler.getMessage(error)));
+      if (cachedCard == null) {
+        emit(KtaFailure(ApiErrorHandler.getMessage(error)));
+      }
     }
   }
 }

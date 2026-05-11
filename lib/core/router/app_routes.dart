@@ -17,6 +17,7 @@ class AppRoutes {
   static const admin = '/admin';
   static const adminMembers = '/admin/members';
   static const adminReports = '/admin/reports';
+  static const adminDues = '/admin/dues';
 
   static String announcementDetail(int id) => '/announcements/$id';
   static String aspirationDetail(int id) => '/aspirations/$id';

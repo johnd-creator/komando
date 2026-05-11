@@ -722,6 +722,57 @@ Flutter should poll `GET /reports/export/status/{id}` to check when export is re
 - `PATCH /finance/dues/mass-update` - Bulk update dues payments
 - `GET /finance/dues/dashboard` - Dues summary and statistics
 
+`GET /finance/dues` mirrors the web admin dues page: it returns active members
+in the scoped unit with the selected period's payment status joined in. Members
+without a payment record are returned as `unpaid`.
+
+**Optional query:**
+- `period`: Month in `YYYY-MM` format. Defaults to current month.
+- `status`: `paid`, `unpaid`, or `waived`.
+- `member_id`: Filter a specific member.
+- `unit_id`: Filter an accessible organization unit.
+- `q`: Search by member name, KTA, or NRA.
+- `page`, `per_page`: Pagination.
+
+**Response:**
+
+```json
+{
+  "dues": [
+    {
+      "id": 10,
+      "member_id": 1,
+      "member_name": "Nama Anggota",
+      "kta_number": "KTA-001",
+      "organization_unit_id": 2,
+      "period": "2026-05",
+      "status": "paid",
+      "amount": 50000.0,
+      "paid_at": "2026-05-07T00:00:00.000000Z",
+      "notes": null
+    },
+    {
+      "id": null,
+      "member_id": 2,
+      "member_name": "Anggota Belum Bayar",
+      "kta_number": "KTA-002",
+      "organization_unit_id": 2,
+      "period": "2026-05",
+      "status": "unpaid",
+      "amount": 0,
+      "paid_at": null,
+      "notes": null
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 9,
+    "per_page": 15,
+    "total": 135
+  }
+}
+```
+
 **Mass Update Request:**
 
 ```json

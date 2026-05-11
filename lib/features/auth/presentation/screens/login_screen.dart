@@ -229,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: height * 0.29,
                       child: IgnorePointer(
                         child: Image.asset(
-                          'assets/people.png',
+                          'assets/sp_ppl.png',
                           fit: BoxFit.contain,
                           alignment: Alignment.bottomCenter,
                         ),

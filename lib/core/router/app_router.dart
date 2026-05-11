@@ -25,7 +25,6 @@ import '../../features/feedback/presentation/screens/feedback_screen.dart';
 import '../../features/finance/data/repositories/finance_repository.dart';
 import '../../features/finance/presentation/bloc/finance_bloc.dart';
 import '../../features/finance/presentation/bloc/finance_event.dart';
-import '../../features/finance/presentation/screens/iuran_screen.dart';
 import '../../features/finance/presentation/screens/keuangan_screen.dart';
 import '../../features/finance/presentation/screens/ledger_form_screen.dart';
 import '../../features/finance/presentation/screens/ledger_detail_screen.dart';
@@ -43,6 +42,11 @@ import '../../features/auth/presentation/bloc/auth_event.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/dues/repository/dues_repository.dart';
+import '../../features/dues/bloc/dues_bloc.dart';
+import '../../features/dues/bloc/dues_admin_bloc.dart';
+import '../../features/dues/screens/my_dues_screen.dart';
+import '../../features/dues/screens/dues_admin_list_screen.dart';
 import '../../shared/presentation/screens/main_shell.dart';
 import 'app_routes.dart';
 
@@ -56,6 +60,7 @@ class AppRouter {
     required NewsRepository newsRepository,
     required FinanceRepository financeRepository,
     required AdminRepository adminRepository,
+    required DuesRepository duesRepository,
   }) : _authBloc = authBloc,
        _announcementRepository = announcementRepository,
        _aspirationRepository = aspirationRepository,
@@ -63,7 +68,8 @@ class AppRouter {
        _feedbackRepository = feedbackRepository,
        _newsRepository = newsRepository,
        _financeRepository = financeRepository,
-       _adminRepository = adminRepository;
+       _adminRepository = adminRepository,
+       _duesRepository = duesRepository;
 
   final AuthBloc _authBloc;
   final AnnouncementRepository _announcementRepository;
@@ -72,8 +78,8 @@ class AppRouter {
   final FeedbackRepository _feedbackRepository;
   final NewsRepository _newsRepository;
   final FinanceRepository _financeRepository;
-
   final AdminRepository _adminRepository;
+  final DuesRepository _duesRepository;
 
   late final GoRouter router = GoRouter(
     initialLocation: AppRoutes.splash,
@@ -174,8 +180,8 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.iuran,
         builder: (context, state) => BlocProvider(
-          create: (_) => FinanceBloc(_financeRepository),
-          child: const IuranScreen(),
+          create: (_) => DuesBloc(repository: _duesRepository),
+          child: const MyDuesScreen(),
         ),
       ),
       GoRoute(
@@ -243,6 +249,13 @@ class AppRouter {
         builder: (context, state) => BlocProvider(
           create: (_) => AdminBloc(_adminRepository),
           child: const ReportsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.adminDues,
+        builder: (context, state) => BlocProvider(
+          create: (_) => DuesAdminBloc(repository: _duesRepository),
+          child: const DuesAdminListScreen(),
         ),
       ),
     ],

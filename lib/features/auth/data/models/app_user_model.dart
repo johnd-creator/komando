@@ -7,6 +7,7 @@ class AppUserModel extends AppUser {
     required super.email,
     required super.roleName,
     required super.roleLabel,
+    super.currentUnitId,
   });
 
   factory AppUserModel.fromJson(Map<String, dynamic> json) {
@@ -30,6 +31,12 @@ class AppUserModel extends AppUser {
         'role_label',
         'roleLabel',
       ], fallback: roleName),
+      currentUnitId: _readInt(userJson, const [
+        'current_unit_id',
+        'currentUnitId',
+        'member_context_unit_id',
+        'memberContextUnitId',
+      ]),
     );
   }
 
@@ -80,5 +87,15 @@ class AppUserModel extends AppUser {
       }
     }
     return fallback;
+  }
+
+  static int? _readInt(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      if (value is String) return int.tryParse(value);
+    }
+    return null;
   }
 }
