@@ -75,7 +75,10 @@ void main() {
 
   runApp(
     MultiRepositoryProvider(
-      providers: [RepositoryProvider.value(value: adminRepository)],
+      providers: [
+        RepositoryProvider.value(value: adminRepository),
+        RepositoryProvider.value(value: newsRepository),
+      ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider.value(value: authBloc),

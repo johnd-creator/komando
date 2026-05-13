@@ -1,8 +1,10 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../shared/presentation/widgets/error_state.dart';
 import '../../../../shared/presentation/widgets/loading_state.dart';
+import '../../../../shared/presentation/widgets/profile_avatar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../bloc/profile_bloc.dart';
@@ -25,6 +27,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _reload() {
     context.read<ProfileBloc>().add(const ProfileRequested());
+  }
+
+  Future<void> _pickAndUploadPhoto() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: false,
+    );
+
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    if (file.path == null) return;
+
+    if (!mounted) return;
+    final bloc = context.read<ProfileBloc>();
+    bloc.add(ProfilePhotoUploaded(file.path!));
+  }
+
+  Future<void> _confirmDeletePhoto() async {
+    final bloc = context.read<ProfileBloc>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Foto'),
+        content: const Text('Yakin ingin menghapus foto profil?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      bloc.add(const ProfilePhotoDeleted());
+    }
   }
 
   @override
@@ -53,10 +96,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
-                        _ProfileAvatar(
-                          photoUrl: profile.photoUrl,
-                          name: profile.name,
-                          radius: 48,
+                        GestureDetector(
+                          onTap: () => _showPhotoOptions(context, profile.photoUrl),
+                          child: Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              ProfileAvatar(
+                                photoUrl: profile.photoUrl,
+                                name: profile.name,
+                                radius: 48,
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Theme.of(context).colorScheme.surface,
+                                    width: 2,
+                                  ),
+                                ),
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.camera_alt_rounded,
+                                  size: 16,
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -131,40 +198,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-}
 
-class _ProfileAvatar extends StatelessWidget {
-  const _ProfileAvatar({
-    required this.photoUrl,
-    required this.name,
-    required this.radius,
-  });
-
-  final String? photoUrl;
-  final String name;
-  final double radius;
-
-  @override
-  Widget build(BuildContext context) {
-    if (photoUrl != null && photoUrl!.isNotEmpty) {
-      return CircleAvatar(
-        radius: radius,
-        backgroundImage: NetworkImage(photoUrl!),
-        onBackgroundImageError: (_, _) {
-          // Fallback handled below by rebuilding
-        },
-        child: _initialsAvatar(name, radius),
-      );
-    }
-    return _initialsAvatar(name, radius);
-  }
-
-  Widget _initialsAvatar(String name, double radius) {
-    return CircleAvatar(
-      radius: radius,
-      child: Text(
-        name.characters.first.toUpperCase(),
-        style: TextStyle(fontSize: radius * 0.65),
+  void _showPhotoOptions(BuildContext context, String? currentPhotoUrl) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Upload Foto'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadPhoto();
+              },
+            ),
+            if (currentPhotoUrl != null && currentPhotoUrl.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded),
+                title: const Text('Hapus Foto'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _confirmDeletePhoto();
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

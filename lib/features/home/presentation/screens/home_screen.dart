@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/router/app_routes.dart';
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
+import '../../../../features/news/data/models/news_model.dart';
+import '../../../../features/news/data/repositories/news_repository.dart';
 import '../../../../shared/presentation/notifiers/bottom_nav_notifier.dart';
 import '../../data/models/dashboard_model.dart';
 import '../bloc/dashboard_bloc.dart';
@@ -19,10 +22,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  List<NewsModel> _latestNews = const [];
+  bool _isNewsLoading = false;
+
   @override
   void initState() {
     super.initState();
     context.read<DashboardBloc>().add(const DashboardRequested());
+    _loadLatestNews();
   }
 
   void _showLainnya(BuildContext context) {
@@ -64,12 +71,83 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openKeuangan(BuildContext context) {
-    context.push(AppRoutes.keuangan);
+  void _showBendahara(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.receipt_long_outlined),
+              title: const Text('Catat transaksi'),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push(AppRoutes.keuangan);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.fact_check_outlined),
+              title: const Text('Kelola iuran'),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push(AppRoutes.adminDues);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _refresh() async {
     context.read<DashboardBloc>().add(const DashboardRequested());
+    await _loadLatestNews(refresh: true);
+  }
+
+  Future<void> _loadLatestNews({bool refresh = false}) async {
+    final repository = context.read<NewsRepository>();
+
+    if (!refresh) {
+      final cached = await repository.getCachedLatestPosts();
+      if (cached.isNotEmpty && mounted) {
+        setState(() {
+          _latestNews = cached.take(3).toList();
+        });
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _isNewsLoading = _latestNews.isEmpty;
+      });
+    }
+
+    try {
+      final posts = await repository.getLatestPosts(limit: 3);
+      if (!mounted) return;
+      setState(() {
+        _latestNews = posts.take(3).toList();
+        _isNewsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isNewsLoading = false;
+      });
+    }
+  }
+
+  Future<void> _openNewsItem(NewsModel item) async {
+    if (item.link.isEmpty) {
+      context.push(AppRoutes.news);
+      return;
+    }
+
+    final uri = Uri.parse(item.link);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.platformDefault);
+    }
   }
 
   String _greetingForNow() {
@@ -95,6 +173,10 @@ class _HomeScreenState extends State<HomeScreen> {
           final dashboard = state is DashboardLoaded ? state.dashboard : null;
           final isLoading =
               state is DashboardLoading || state is DashboardInitial;
+          final authState = context.watch<AuthBloc>().state;
+          final showBendahara =
+              authState is AuthAuthenticated &&
+              authState.user.normalizedRoleName != 'anggota';
 
           return RefreshIndicator(
             onRefresh: _refresh,
@@ -111,14 +193,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   sliver: SliverList.list(
                     children: [
                       _FeatureAccessPanel(
-                        onKtaTap: () => context.push('/kta'),
                         onIuranTap: () => context.push(AppRoutes.iuran),
                         onAspirasiTap: () =>
                             context.push(AppRoutes.aspirations),
                         onSuratTap: () => context.push(AppRoutes.letters),
                         onPengumumanTap: () =>
                             context.push(AppRoutes.announcements),
-                        onKeuanganTap: () => _openKeuangan(context),
+                        onBendaharaTap: showBendahara
+                            ? () => _showBendahara(context)
+                            : null,
                         onNewsTap: () => context.push(AppRoutes.news),
                         onLainnyaTap: () => _showLainnya(context),
                       ),
@@ -130,6 +213,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             ? state.message
                             : null,
                         onRetry: _refresh,
+                      ),
+                      const SizedBox(height: 16),
+                      _LatestNewsCard(
+                        isLoading: _isNewsLoading,
+                        items: _latestNews,
+                        onSeeAll: () => context.push(AppRoutes.news),
+                        onItemTap: _openNewsItem,
                       ),
                     ],
                   ),
@@ -412,22 +502,20 @@ class _KtaStatusCard extends StatelessWidget {
 
 class _FeatureAccessPanel extends StatelessWidget {
   const _FeatureAccessPanel({
-    required this.onKtaTap,
     required this.onIuranTap,
     required this.onAspirasiTap,
     required this.onSuratTap,
     required this.onPengumumanTap,
-    required this.onKeuanganTap,
+    required this.onBendaharaTap,
     required this.onNewsTap,
     required this.onLainnyaTap,
   });
 
-  final VoidCallback onKtaTap;
   final VoidCallback onIuranTap;
   final VoidCallback onAspirasiTap;
   final VoidCallback onSuratTap;
   final VoidCallback onPengumumanTap;
-  final VoidCallback onKeuanganTap;
+  final VoidCallback? onBendaharaTap;
   final VoidCallback onNewsTap;
   final VoidCallback onLainnyaTap;
 
@@ -454,20 +542,6 @@ class _FeatureAccessPanel extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             children: [
               _FeatureTile(
-                icon: Icons.badge_outlined,
-                label: 'KTA Digital',
-                foreground: const Color(0xFF1168CF),
-                background: const Color(0xFFEAF4FF),
-                onTap: onKtaTap,
-              ),
-              _FeatureTile(
-                icon: Icons.payments_outlined,
-                label: 'Iuran',
-                foreground: const Color(0xFF04784A),
-                background: const Color(0xFFEAF7EF),
-                onTap: onIuranTap,
-              ),
-              _FeatureTile(
                 icon: Icons.chat_bubble_outline_rounded,
                 label: 'Aspirasi',
                 foreground: const Color(0xFF5144D9),
@@ -482,18 +556,11 @@ class _FeatureAccessPanel extends StatelessWidget {
                 onTap: onSuratTap,
               ),
               _FeatureTile(
-                icon: Icons.notifications_active_outlined,
-                label: 'Pengumuman',
-                foreground: const Color(0xFFC23A2A),
-                background: const Color(0xFFFFECE9),
-                onTap: onPengumumanTap,
-              ),
-              _FeatureTile(
-                icon: Icons.request_quote_outlined,
-                label: 'Keuangan',
-                foreground: const Color(0xFF2E7D32),
-                background: const Color(0xFFEDF7E8),
-                onTap: onKeuanganTap,
+                icon: Icons.payments_outlined,
+                label: 'Iuran',
+                foreground: const Color(0xFF04784A),
+                background: const Color(0xFFEAF7EF),
+                onTap: onIuranTap,
               ),
               _FeatureTile(
                 icon: Icons.newspaper_rounded,
@@ -502,6 +569,21 @@ class _FeatureAccessPanel extends StatelessWidget {
                 background: const Color(0xFFFFEEF7),
                 onTap: onNewsTap,
               ),
+              _FeatureTile(
+                icon: Icons.notifications_active_outlined,
+                label: 'Pengumuman',
+                foreground: const Color(0xFFC23A2A),
+                background: const Color(0xFFFFECE9),
+                onTap: onPengumumanTap,
+              ),
+              if (onBendaharaTap != null)
+                _FeatureTile(
+                  icon: Icons.account_balance_wallet_outlined,
+                  label: 'Bendahara',
+                  foreground: const Color(0xFF2E7D32),
+                  background: const Color(0xFFEDF7E8),
+                  onTap: onBendaharaTap!,
+                ),
               _FeatureTile(
                 icon: Icons.more_horiz_rounded,
                 label: 'Lainnya',
@@ -772,6 +854,211 @@ class _AnnouncementTile extends StatelessWidget {
         if (showDivider)
           const Divider(height: 1, indent: 74, color: Color(0xFFE5EAF1)),
       ],
+    );
+  }
+}
+
+class _LatestNewsCard extends StatelessWidget {
+  const _LatestNewsCard({
+    required this.isLoading,
+    required this.items,
+    required this.onSeeAll,
+    required this.onItemTap,
+  });
+
+  final bool isLoading;
+  final List<NewsModel> items;
+  final VoidCallback onSeeAll;
+  final ValueChanged<NewsModel> onItemTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SoftPanel(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Berita terbaru',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: onSeeAll,
+                child: const Text('Lihat semua'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (isLoading)
+            const ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: SizedBox.square(
+                dimension: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              title: Text('Memuat berita terbaru'),
+            )
+          else if (items.isEmpty)
+            const ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.article_outlined),
+              title: Text('Belum ada berita terbaru'),
+              subtitle: Text('Tarik ke bawah untuk memuat ulang.'),
+            )
+          else
+            for (final entry in items.take(3).indexed)
+              _LatestNewsTile(
+                item: entry.$2,
+                showDivider: entry.$1 < items.take(3).length - 1,
+                onTap: () => onItemTap(entry.$2),
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LatestNewsTile extends StatelessWidget {
+  const _LatestNewsTile({
+    required this.item,
+    required this.showDivider,
+    required this.onTap,
+  });
+
+  final NewsModel item;
+  final bool showDivider;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: item.imageUrl.isNotEmpty
+                      ? Image.network(
+                          item.imageUrl,
+                          width: 96,
+                          height: 74,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _NewsImageFallback(colorScheme: colorScheme),
+                        )
+                      : _NewsImageFallback(colorScheme: colorScheme),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF111827),
+                          fontWeight: FontWeight.w800,
+                          height: 1.22,
+                        ),
+                      ),
+                      if (item.excerpt.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          item.excerpt,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: const Color(0xFF4B5563),
+                                height: 1.32,
+                              ),
+                        ),
+                      ],
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.date,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF1168CF),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ),
+                          Text(
+                            'Baca',
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(
+                                  color: const Color(0xFF1168CF),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          const SizedBox(width: 3),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 18,
+                            color: Color(0xFF1168CF),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF4B5563),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider)
+          const Divider(height: 1, indent: 108, color: Color(0xFFE5EAF1)),
+      ],
+    );
+  }
+}
+
+class _NewsImageFallback extends StatelessWidget {
+  const _NewsImageFallback({required this.colorScheme});
+
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 96,
+      height: 74,
+      color: colorScheme.surfaceContainerHighest,
+      child: Icon(Icons.article_outlined, color: colorScheme.onSurfaceVariant),
     );
   }
 }

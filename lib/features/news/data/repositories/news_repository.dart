@@ -11,6 +11,28 @@ class NewsRepository {
 
   Future<List<NewsModel>> getCachedPosts() async {
     final cached = await _cache.readJson(AppCache.newsFirstPageKey);
+    return _readCachedItems(cached);
+  }
+
+  Future<List<NewsModel>> getCachedLatestPosts() async {
+    final cached = await _cache.readJson(AppCache.newsLatestKey);
+    return _readCachedItems(cached);
+  }
+
+  Future<List<NewsModel>> getLatestPosts({int limit = 3}) async {
+    final posts = await getPosts(
+      page: 1,
+      perPage: limit,
+      cacheFirstPage: false,
+    );
+    await _cache.writeJson(AppCache.newsLatestKey, {
+      'items': posts.map((post) => post.toCache()).toList(),
+      'cached_at': DateTime.now().toIso8601String(),
+    });
+    return posts;
+  }
+
+  List<NewsModel> _readCachedItems(Map<String, dynamic>? cached) {
     final items = cached?['items'];
     if (items is! List) return const [];
 
@@ -20,7 +42,11 @@ class NewsRepository {
         .toList();
   }
 
-  Future<List<NewsModel>> getPosts({int page = 1, int perPage = 10}) async {
+  Future<List<NewsModel>> getPosts({
+    int page = 1,
+    int perPage = 10,
+    bool cacheFirstPage = true,
+  }) async {
     final response = await _wpClient.dio.get<List<dynamic>>(
       '/posts',
       queryParameters: {'page': page, 'per_page': perPage, '_embed': ''},
@@ -29,7 +55,7 @@ class NewsRepository {
     final posts = list
         .map((e) => NewsModel.fromJson(e as Map<String, dynamic>))
         .toList();
-    if (page == 1) {
+    if (cacheFirstPage && page == 1) {
       await _cache.writeJson(AppCache.newsFirstPageKey, {
         'items': posts.map((post) => post.toCache()).toList(),
         'cached_at': DateTime.now().toIso8601String(),

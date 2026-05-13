@@ -10,3 +10,16 @@ sealed class ProfileEvent extends Equatable {
 class ProfileRequested extends ProfileEvent {
   const ProfileRequested();
 }
+
+class ProfilePhotoUploaded extends ProfileEvent {
+  const ProfilePhotoUploaded(this.filePath);
+
+  final String filePath;
+
+  @override
+  List<Object?> get props => [filePath];
+}
+
+class ProfilePhotoDeleted extends ProfileEvent {
+  const ProfilePhotoDeleted();
+}

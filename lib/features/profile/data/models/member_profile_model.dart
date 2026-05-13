@@ -1,4 +1,5 @@
 import '../../../../core/api/json_read.dart';
+import '../../../../core/constants/api_constants.dart';
 
 class MemberProfileModel {
   const MemberProfileModel({
@@ -48,6 +49,16 @@ class MemberProfileModel {
         ? readMap(data, 'unit')
         : readMap(member, 'unit');
 
+    final rawPhotoUrl = member['photo_url'];
+    final relativePhotoUrl = rawPhotoUrl is String && rawPhotoUrl.isNotEmpty
+        ? rawPhotoUrl
+        : null;
+
+    // Convert relative URL to absolute URL
+    final photoUrl = relativePhotoUrl != null
+        ? ApiConstants.getAbsolutePhotoUrl(relativePhotoUrl)
+        : null;
+
     return MemberProfileModel(
       name: readString(member, const [
         'full_name',
@@ -75,7 +86,7 @@ class MemberProfileModel {
         'nomor_anggota',
         'member_number',
       ], fallback: '-'),
-      photoUrl: member['photo_url'] as String?,
+      photoUrl: photoUrl,
     );
   }
 

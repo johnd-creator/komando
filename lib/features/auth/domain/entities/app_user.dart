@@ -8,6 +8,8 @@ class AppUser extends Equatable {
     required this.roleName,
     required this.roleLabel,
     this.currentUnitId,
+    this.avatar,
+    this.photoUrl,
   });
 
   final int id;
@@ -16,6 +18,10 @@ class AppUser extends Equatable {
   final String roleName;
   final String roleLabel;
   final int? currentUnitId;
+  final String? avatar;
+  final String? photoUrl;
+
+  String get initial => name.isNotEmpty ? name[0].toUpperCase() : '?';
 
   String get normalizedRoleName =>
       roleName.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
@@ -38,5 +44,5 @@ class AppUser extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, name, email, roleName, roleLabel, currentUnitId];
+  List<Object?> get props => [id, name, email, roleName, roleLabel, currentUnitId, avatar, photoUrl];
 }

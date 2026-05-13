@@ -1,0 +1,49 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter (Local Backend - Android Emulator)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=API_BASE_URL=http://10.0.2.2/api/mobile/v1",
+        "--dart-define=WEB_BASE_URL=http://10.0.2.2"
+      ]
+    },
+    {
+      "name": "Flutter (Local Backend - iOS Simulator)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=API_BASE_URL=http://localhost/api/mobile/v1",
+        "--dart-define=WEB_BASE_URL=http://localhost"
+      ]
+    },
+    {
+      "name": "Flutter (Local Backend - Physical Device)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=API_BASE_URL=http://192.168.1.100/api/mobile/v1",
+        "--dart-define=WEB_BASE_URL=http://192.168.1.100"
+      ]
+    },
+    {
+      "name": "Flutter (Production)",
+      "request": "launch",
+      "type": "dart"
+    },
+    {
+      "name": "Flutter (Profile Mode)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile"
+    },
+    {
+      "name": "Flutter (Release Mode)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release"
+    }
+  ]
+}

@@ -8,12 +8,14 @@ class AppCache {
     : _storage = storage ?? const FlutterSecureStorage();
 
   static const newsFirstPageKey = 'cache.news.first_page';
+  static const newsLatestKey = 'cache.news.latest';
   static const profileKey = 'cache.profile';
   static const ktaCardKey = 'cache.kta.card';
   static const ktaQrKey = 'cache.kta.qr';
 
   static const userScopedKeys = [
     newsFirstPageKey,
+    newsLatestKey,
     profileKey,
     ktaCardKey,
     ktaQrKey,

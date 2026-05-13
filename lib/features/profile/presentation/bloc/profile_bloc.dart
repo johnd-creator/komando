@@ -8,6 +8,8 @@ import 'profile_state.dart';
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ProfileBloc(this._repository) : super(const ProfileInitial()) {
     on<ProfileRequested>(_onRequested);
+    on<ProfilePhotoUploaded>(_onPhotoUploaded);
+    on<ProfilePhotoDeleted>(_onPhotoDeleted);
   }
 
   final ProfileRepository _repository;
@@ -29,6 +31,30 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       if (cached == null) {
         emit(ProfileFailure(ApiErrorHandler.getMessage(error)));
       }
+    }
+  }
+
+  Future<void> _onPhotoUploaded(
+    ProfilePhotoUploaded event,
+    Emitter<ProfileState> emit,
+  ) async {
+    try {
+      final updated = await _repository.uploadPhoto(event.filePath);
+      emit(ProfileLoaded(updated));
+    } catch (error) {
+      emit(ProfileFailure(ApiErrorHandler.getMessage(error)));
+    }
+  }
+
+  Future<void> _onPhotoDeleted(
+    ProfilePhotoDeleted event,
+    Emitter<ProfileState> emit,
+  ) async {
+    try {
+      final updated = await _repository.deletePhoto();
+      emit(ProfileLoaded(updated));
+    } catch (error) {
+      emit(ProfileFailure(ApiErrorHandler.getMessage(error)));
     }
   }
 }

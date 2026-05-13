@@ -1,3 +1,4 @@
+import '../../../../core/constants/api_constants.dart';
 import '../../domain/entities/app_user.dart';
 
 class AppUserModel extends AppUser {
@@ -8,6 +9,8 @@ class AppUserModel extends AppUser {
     required super.roleName,
     required super.roleLabel,
     super.currentUnitId,
+    super.avatar,
+    super.photoUrl,
   });
 
   factory AppUserModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +23,20 @@ class AppUserModel extends AppUser {
       'roleName',
       'role',
     ], fallback: roleJson is String ? roleJson : 'anggota');
+
+    final avatar = _readNullableString(userJson, const ['avatar']);
+    final memberJson = userJson['member'];
+    final memberPhotoUrl = memberJson is Map<String, dynamic>
+        ? _readNullableString(memberJson, const ['photo_url'])
+        : null;
+
+    // Convert relative URLs to absolute URLs
+    final absoluteAvatar = avatar != null
+        ? ApiConstants.getAbsolutePhotoUrl(avatar)
+        : null;
+    final absoluteMemberPhotoUrl = memberPhotoUrl != null
+        ? ApiConstants.getAbsolutePhotoUrl(memberPhotoUrl)
+        : null;
 
     return AppUserModel(
       id: (userJson['id'] as num?)?.toInt() ?? 0,
@@ -37,6 +54,8 @@ class AppUserModel extends AppUser {
         'member_context_unit_id',
         'memberContextUnitId',
       ]),
+      avatar: absoluteAvatar,
+      photoUrl: absoluteMemberPhotoUrl ?? absoluteAvatar,
     );
   }
 
@@ -95,6 +114,19 @@ class AppUserModel extends AppUser {
       if (value is int) return value;
       if (value is num) return value.toInt();
       if (value is String) return int.tryParse(value);
+    }
+    return null;
+  }
+
+  static String? _readNullableString(
+    Map<String, dynamic> json,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value is String && value.trim().isNotEmpty) {
+        return value.trim();
+      }
     }
     return null;
   }
