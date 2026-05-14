@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/presentation/widgets/error_state.dart';
 import '../../../../shared/presentation/widgets/loading_state.dart';
+import '../../../../shared/presentation/notifiers/bottom_nav_notifier.dart';
 import '../../data/models/notification_model.dart';
 import '../bloc/notification_bloc.dart';
 import '../bloc/notification_event.dart';
@@ -143,44 +144,150 @@ class _NotificationScreenState extends State<NotificationScreen> {
     BuildContext context,
     NotificationModel notification,
   ) {
-    // 1. If the notification carries an explicit deep-link, use it directly.
-    //    Only follow internal paths (starting with '/') to avoid open-redirect.
     final link = notification.link;
-    if (link != null && link.trim().isNotEmpty && link.startsWith('/')) {
-      // Validate the path is a known route prefix before pushing
-      final knownPrefixes = [
-        '/announcements',
-        '/aspirations',
-        '/letters',
-        '/finance',
-        '/iuran',
-        '/keuangan',
-        '/kta',
-        '/news',
-        '/admin',
-      ];
-      final isKnown = knownPrefixes.any((p) => link.startsWith(p));
-      if (isKnown) {
-        context.push(link);
-        return;
-      }
+    final route = link == null ? null : _mobileRouteFromLink(link);
+    if (route != null) {
+      _openRoute(context, route);
+      return;
     }
 
-    // 2. Fall back to the feature list screen based on category.
-    final route = switch (notification.category.toLowerCase()) {
-      'announcement' => AppRoutes.announcements,
-      'aspiration' => AppRoutes.aspirations,
-      'letter' => AppRoutes.letters,
-      'finance' => AppRoutes.keuangan,
-      'dues' => AppRoutes.iuran,
-      'membership' => AppRoutes.kta,
-      _ => null,
+    if (_openShellTabFromLink(context, link)) {
+      return;
+    }
+
+    // Fallback berdasarkan kategori
+    final category = notification.category.toLowerCase();
+    final type = notification.type.toLowerCase();
+
+    // Coba match kategori
+    if (category.contains('announcement') ||
+        category.contains('pengumuman') ||
+        type.contains('announcement') ||
+        type.contains('pengumuman')) {
+      _openRoute(context, AppRoutes.announcements);
+    } else if (category.contains('aspiration') ||
+        category.contains('aspirasi') ||
+        type.contains('aspiration') ||
+        type.contains('aspirasi')) {
+      _openRoute(context, AppRoutes.aspirations);
+    } else if (category.contains('letter') ||
+        category.contains('surat') ||
+        type.contains('letter') ||
+        type.contains('surat')) {
+      _openRoute(context, AppRoutes.letters);
+    } else if (category.contains('finance') ||
+        category.contains('keuangan') ||
+        type.contains('finance') ||
+        type.contains('keuangan')) {
+      _openRoute(context, AppRoutes.keuangan);
+    } else if (category.contains('dues') ||
+        category.contains('iuran') ||
+        type.contains('dues') ||
+        type.contains('iuran')) {
+      _openRoute(context, AppRoutes.iuran);
+    } else if (category.contains('membership') ||
+        category.contains('kta') ||
+        type.contains('membership') ||
+        type.contains('kta')) {
+      _openRoute(context, AppRoutes.kta);
+    } else if (category.contains('news') ||
+        category.contains('berita') ||
+        type.contains('news') ||
+        type.contains('berita')) {
+      _openRoute(context, AppRoutes.news);
+    } else {
+      BottomNavScope.of(context).goToTab(0);
+    }
+  }
+
+  void _openRoute(BuildContext context, String route) {
+    if (route == AppRoutes.home) {
+      context.go(route);
+      return;
+    }
+    context.push(route);
+  }
+
+  bool _openShellTabFromLink(BuildContext context, String? link) {
+    final route = _normalizedPath(link);
+    if (route == null) return false;
+
+    if (route == AppRoutes.notifications) {
+      BottomNavScope.of(context).goToTab(2);
+      return true;
+    }
+    if (route == '/profile' || route == '/member/profile') {
+      BottomNavScope.of(context).goToTab(3);
+      return true;
+    }
+    if (route == '/member/portal') {
+      BottomNavScope.of(context).goToTab(0);
+      return true;
+    }
+
+    return false;
+  }
+
+  String? _mobileRouteFromLink(String link) {
+    final path = _normalizedPath(link);
+    if (path == null) return null;
+
+    final exactRoutes = <String, String>{
+      '/': AppRoutes.home,
+      '/home': AppRoutes.home,
+      '/dashboard': AppRoutes.home,
+      '/announcements': AppRoutes.announcements,
+      '/pengumuman': AppRoutes.announcements,
+      '/aspirations': AppRoutes.aspirations,
+      '/aspirasi': AppRoutes.aspirations,
+      '/letters': AppRoutes.letters,
+      '/surat': AppRoutes.letters,
+      '/finance': AppRoutes.keuangan,
+      '/finance/ledgers': AppRoutes.keuangan,
+      '/keuangan': AppRoutes.keuangan,
+      '/dues': AppRoutes.iuran,
+      '/iuran': AppRoutes.iuran,
+      '/member/card': AppRoutes.kta,
+      '/kta': AppRoutes.kta,
+      '/news': AppRoutes.news,
+      '/berita': AppRoutes.news,
+    };
+    final exactRoute = exactRoutes[path];
+    if (exactRoute != null) return exactRoute;
+
+    final detailPatterns = <RegExp, String Function(int)>{
+      RegExp(r'^/announcements/(\d+)$'): AppRoutes.announcementDetail,
+      RegExp(r'^/pengumuman/(\d+)$'): AppRoutes.announcementDetail,
+      RegExp(r'^/aspirations/(\d+)$'): AppRoutes.aspirationDetail,
+      RegExp(r'^/aspirasi/(\d+)$'): AppRoutes.aspirationDetail,
+      RegExp(r'^/admin/aspirations/(\d+)$'): AppRoutes.aspirationDetail,
+      RegExp(r'^/letters/(\d+)$'): AppRoutes.letterDetail,
+      RegExp(r'^/surat/(\d+)$'): AppRoutes.letterDetail,
+      RegExp(r'^/finance/ledgers/(\d+)$'): AppRoutes.financeLedgerDetail,
     };
 
-    if (route != null) {
-      context.push(route);
+    for (final entry in detailPatterns.entries) {
+      final match = entry.key.firstMatch(path);
+      if (match == null) continue;
+      final id = int.tryParse(match.group(1) ?? '');
+      if (id != null && id > 0) return entry.value(id);
     }
-    // If no matching route, do nothing — avoids the "route not found" crash.
+
+    return null;
+  }
+
+  String? _normalizedPath(String? link) {
+    final trimmed = link?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+
+    final uri = Uri.tryParse(trimmed);
+    final path = uri?.hasScheme == true ? uri!.path : trimmed.split('?').first;
+    if (path.isEmpty || !path.startsWith('/')) return null;
+
+    final normalized = path.endsWith('/') && path.length > 1
+        ? path.substring(0, path.length - 1)
+        : path;
+    return normalized;
   }
 }
 

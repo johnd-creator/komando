@@ -64,10 +64,14 @@ class _LetterDetailScreenState extends State<LetterDetailScreen> {
             slivers: [
               // Gradient app bar
               SliverAppBar(
-                expandedHeight: 160,
+                expandedHeight: 178,
                 pinned: true,
                 backgroundColor: const Color(0xFF1565C0),
                 foregroundColor: Colors.white,
+                title: const Text(
+                  'Detail Surat',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                ),
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
                     decoration: const BoxDecoration(
@@ -79,50 +83,43 @@ class _LetterDetailScreenState extends State<LetterDetailScreen> {
                     ),
                     child: SafeArea(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
+                        padding: const EdgeInsets.fromLTRB(20, 70, 20, 18),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const Text(
+                              'Detail Surat',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                height: 1.08,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
                             Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    letter.categoryName,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
+                                Flexible(
+                                  child: _HeaderBadge(
+                                    label: letter.categoryName,
+                                    background: Colors.white.withValues(
+                                      alpha: 0.20,
                                     ),
+                                    borderColor: Colors.transparent,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withValues(alpha: 0.25),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.4),
+                                Flexible(
+                                  child: _HeaderBadge(
+                                    label: statusLabel,
+                                    background: statusColor.withValues(
+                                      alpha: 0.25,
                                     ),
-                                  ),
-                                  child: Text(
-                                    statusLabel,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
+                                    borderColor: Colors.white.withValues(
+                                      alpha: 0.4,
                                     ),
                                   ),
                                 ),
@@ -133,15 +130,6 @@ class _LetterDetailScreenState extends State<LetterDetailScreen> {
                       ),
                     ),
                   ),
-                  title: const Text(
-                    'Detail Surat',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
                 ),
               ),
 
@@ -296,6 +284,40 @@ class _LetterDetailScreenState extends State<LetterDetailScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _HeaderBadge extends StatelessWidget {
+  const _HeaderBadge({
+    required this.label,
+    required this.background,
+    required this.borderColor,
+  });
+
+  final String label;
+  final Color background;
+  final Color borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

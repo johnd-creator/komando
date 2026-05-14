@@ -19,6 +19,6 @@ class NotificationRepository {
   }
 
   Future<void> markAllRead() async {
-    await _apiClient.dio.post<void>('/notifications/mark-all-read');
+    await _apiClient.dio.post<void>('/notifications/read-all');
   }
 }

@@ -126,23 +126,14 @@ class _SummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        aspiration.title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A2E),
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    _StatusPill(status: aspiration.status),
-                  ],
+                Text(
+                  aspiration.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A2E),
+                    height: 1.3,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -152,6 +143,11 @@ class _SummaryCard extends StatelessWidget {
                     color: Color(0xFF1565C0),
                     fontWeight: FontWeight.w700,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _StatusPill(status: aspiration.status),
                 ),
                 const SizedBox(height: 8),
                 Row(
