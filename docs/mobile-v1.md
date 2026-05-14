@@ -190,7 +190,7 @@ Multipart form fields:
 
 ### `GET /member/card`
 
-Returns the authenticated member's card payload, including KTA/NRA, status, unit, QR token, verification URLs, `download_url`, `has_qr`, and `can_download_pdf`.
+Returns the authenticated member's card payload, including KTA, status, unit, QR token, verification URLs, `download_url`, `has_qr`, and `can_download_pdf`.
 
 If `qr_token` or `valid_until` is empty, the API issues them automatically when the member has a KTA and the member unit can issue KTA.
 
@@ -731,7 +731,7 @@ without a payment record are returned as `unpaid`.
 - `status`: `paid`, `unpaid`, or `waived`.
 - `member_id`: Filter a specific member.
 - `unit_id`: Filter an accessible organization unit.
-- `q`: Search by member name, KTA, or NRA.
+- `q`: Search by member name, KTA.
 - `page`, `per_page`: Pagination.
 
 **Response:**

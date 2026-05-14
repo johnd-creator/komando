@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/api/api_client.dart';
 import '../../../../core/cache/app_cache.dart';
+import '../../../profile/data/models/member_profile_model.dart';
 import '../models/kta_card_model.dart';
 
 class KtaRepository {
@@ -27,9 +28,48 @@ class KtaRepository {
     final response = await _apiClient.dio.get<Map<String, dynamic>>(
       '/member/card',
     );
-    final card = KtaCardModel.fromJson(response.data ?? {});
+    final card = await _mergeProfileData(
+      KtaCardModel.fromJson(response.data ?? {}),
+    );
     await _cache.writeJson(AppCache.ktaCardKey, card.toCache());
     return card;
+  }
+
+  Future<KtaCardModel> _mergeProfileData(KtaCardModel card) async {
+    try {
+      final cachedProfile = await _cache.readJson(AppCache.profileKey);
+      final profile = cachedProfile == null
+          ? await _getProfileFromApi()
+          : MemberProfileModel.fromCache(cachedProfile);
+
+      return card.copyWith(
+        name: _prefer(profile.name, card.name),
+        number: _prefer(profile.memberNumber, card.number),
+        status: _prefer(profile.status, card.status),
+        unit: _prefer(profile.unit, card.unit),
+        jobTitle: _prefer(
+          profile.unionPosition,
+          profile.jobTitle,
+          card.jobTitle,
+        ),
+        photoUrl: profile.photoUrl ?? card.photoUrl,
+      );
+    } catch (_) {
+      return card;
+    }
+  }
+
+  Future<MemberProfileModel> _getProfileFromApi() async {
+    final response = await _apiClient.dio.get<Map<String, dynamic>>('/profile');
+    final profile = MemberProfileModel.fromJson(response.data ?? {});
+    await _cache.writeJson(AppCache.profileKey, profile.toCache());
+    return profile;
+  }
+
+  String _prefer(String first, String second, [String? third]) {
+    if (first.trim().isNotEmpty && first != '-') return first;
+    if (second.trim().isNotEmpty && second != '-') return second;
+    return third ?? second;
   }
 
   Future<Uint8List> getQrImage() async {
