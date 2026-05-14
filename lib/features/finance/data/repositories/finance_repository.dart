@@ -14,9 +14,10 @@ class FinanceRepository {
     return DuesResponse.fromJson(response.data ?? {});
   }
 
-  Future<FinanceDashboardModel> getDashboard() async {
+  Future<FinanceDashboardModel> getDashboard({int? unitId}) async {
     final response = await _apiClient.dio.get<Map<String, dynamic>>(
       '/finance/dashboard',
+      queryParameters: {'unit_id': ?unitId, 'organization_unit_id': ?unitId},
     );
     return FinanceDashboardModel.fromJson(response.data ?? {});
   }

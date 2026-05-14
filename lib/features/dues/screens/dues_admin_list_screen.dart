@@ -151,95 +151,29 @@ class _DuesAdminListScreenState extends State<DuesAdminListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final currentPeriodLabel =
         '${_monthNames[_selectedMonth.month - 1]} ${_selectedMonth.year}';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Kelola Iuran Anggota')),
+      backgroundColor: const Color(0xFFF3F7FC),
       body: BlocBuilder<DuesAdminBloc, DuesAdminState>(
         builder: (context, state) {
           return Column(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                color: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.3,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: () => _changeMonth(-1),
-                    ),
-                    InkWell(
-                      onTap: _pickMonth,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.calendar_month, size: 18),
-                          const SizedBox(width: 6),
-                          Text(
-                            currentPeriodLabel,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: () => _changeMonth(1),
-                    ),
-                  ],
-                ),
+              _DuesAdminHeader(
+                periodLabel: currentPeriodLabel,
+                summaryPaid: state.summary?.paid ?? 0,
+                summaryUnpaid: state.summary?.unpaid ?? 0,
+                totalAmount: state.summary?.totalAmount ?? 0,
+                selectedCount: _selectedMemberIds.length,
+                searchController: _searchController,
+                onBack: () => Navigator.of(context).maybePop(),
+                onPreviousMonth: () => _changeMonth(-1),
+                onNextMonth: () => _changeMonth(1),
+                onPickMonth: _pickMonth,
+                onSearchChanged: _onSearchChanged,
+                onClearSearch: _clearSearch,
               ),
-              if (state.summary != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildSummaryItem(
-                        'Lunas',
-                        state.summary!.paid,
-                        Colors.green,
-                      ),
-                      _buildSummaryItem(
-                        'Belum',
-                        state.summary!.unpaid,
-                        Colors.red,
-                      ),
-                    ],
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: TextField(
-                  controller: _searchController,
-                  textInputAction: TextInputAction.search,
-                  onChanged: _onSearchChanged,
-                  decoration: InputDecoration(
-                    hintText: 'Cari nama atau KTA',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            tooltip: 'Hapus pencarian',
-                            onPressed: _clearSearch,
-                            icon: const Icon(Icons.close),
-                          )
-                        : null,
-                    isDense: true,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
               Expanded(child: _buildContent(state)),
             ],
           );
@@ -276,9 +210,9 @@ class _DuesAdminListScreenState extends State<DuesAdminListScreen> {
       },
       child: ListView.separated(
         controller: _scrollController,
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 96),
         itemCount: state.payments.length + (state.hasMore ? 1 : 0),
-        separatorBuilder: (context, index) => const Divider(height: 1),
+        separatorBuilder: (context, index) => const SizedBox(height: 10),
         itemBuilder: (context, index) {
           if (index >= state.payments.length) {
             return const Padding(
@@ -301,41 +235,26 @@ class _DuesAdminListScreenState extends State<DuesAdminListScreen> {
               !payment.isPaid &&
               !payment.isWaived;
 
-          return ListTile(
-            leading: canSelect
-                ? Checkbox(
-                    value: _selectedMemberIds.contains(memberId),
-                    onChanged: (val) {
-                      setState(() {
-                        if (val == true) {
-                          _selectedMemberIds.add(memberId);
-                        } else {
-                          _selectedMemberIds.remove(memberId);
-                        }
-                      });
-                    },
-                  )
+          return _AdminDueCard(
+            memberName: memberName,
+            memberInfo: memberInfo,
+            amountLabel: payment.isPaid
+                ? 'Rp ${_formatAmount(payment.amount)}'
+                : 'Belum bayar',
+            status: payment.status,
+            canSelect: canSelect,
+            selected: memberId != null && _selectedMemberIds.contains(memberId),
+            onSelectedChanged: canSelect
+                ? (val) {
+                    setState(() {
+                      if (val == true) {
+                        _selectedMemberIds.add(memberId);
+                      } else {
+                        _selectedMemberIds.remove(memberId);
+                      }
+                    });
+                  }
                 : null,
-            title: Text(
-              memberName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Text(memberInfo),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                DuesStatusBadge(status: payment.status),
-                const SizedBox(height: 4),
-                Text(
-                  payment.isPaid
-                      ? 'Rp ${_formatAmount(payment.amount)}'
-                      : 'Belum bayar',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
           );
         },
       ),
@@ -371,26 +290,482 @@ class _DuesAdminListScreenState extends State<DuesAdminListScreen> {
     }
   }
 
-  Widget _buildSummaryItem(String label, int value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value.toString(),
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(label, style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-
   String _formatAmount(double amount) {
     return amount.toInt().toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]}.',
+    );
+  }
+}
+
+class _DuesAdminHeader extends StatelessWidget {
+  const _DuesAdminHeader({
+    required this.periodLabel,
+    required this.summaryPaid,
+    required this.summaryUnpaid,
+    required this.totalAmount,
+    required this.selectedCount,
+    required this.searchController,
+    required this.onBack,
+    required this.onPreviousMonth,
+    required this.onNextMonth,
+    required this.onPickMonth,
+    required this.onSearchChanged,
+    required this.onClearSearch,
+  });
+
+  final String periodLabel;
+  final int summaryPaid;
+  final int summaryUnpaid;
+  final double totalAmount;
+  final int selectedCount;
+  final TextEditingController searchController;
+  final VoidCallback onBack;
+  final VoidCallback onPreviousMonth;
+  final VoidCallback onNextMonth;
+  final VoidCallback onPickMonth;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onClearSearch;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          height: 280,
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF0B67C8), Color(0xFF228CE5)],
+            ),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Opacity(
+                opacity: 0.26,
+                child: Transform.scale(
+                  scale: 1.18,
+                  child: Image.asset(
+                    'assets/bg-asset.png',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                  ),
+                ),
+              ),
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: onBack,
+                            icon: const Icon(Icons.arrow_back),
+                            color: Colors.white,
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Kelola Iuran',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Iuran Anggota',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Pantau pembayaran dan catat iuran anggota.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.86),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _HeaderStat(
+                              label: 'Lunas',
+                              value: summaryPaid.toString(),
+                              color: const Color(0xFF19A85B),
+                              textColor: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _HeaderStat(
+                              label: 'Belum',
+                              value: summaryUnpaid.toString(),
+                              color: const Color(0xFFFFD7D3),
+                              textColor: const Color(0xFFB3261E),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _HeaderStat(
+                              label: 'Terkumpul',
+                              value: 'Rp ${_formatMoney(totalAmount)}',
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          left: 16,
+          right: 16,
+          top: 270,
+          child: _DuesControlCard(
+            periodLabel: periodLabel,
+            selectedCount: selectedCount,
+            searchController: searchController,
+            onPreviousMonth: onPreviousMonth,
+            onNextMonth: onNextMonth,
+            onPickMonth: onPickMonth,
+            onSearchChanged: onSearchChanged,
+            onClearSearch: onClearSearch,
+          ),
+        ),
+        const SizedBox(height: 436),
+      ],
+    );
+  }
+
+  static String _formatMoney(double amount) {
+    return amount.toInt().toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]}.',
+    );
+  }
+}
+
+class _DuesControlCard extends StatelessWidget {
+  const _DuesControlCard({
+    required this.periodLabel,
+    required this.selectedCount,
+    required this.searchController,
+    required this.onPreviousMonth,
+    required this.onNextMonth,
+    required this.onPickMonth,
+    required this.onSearchChanged,
+    required this.onClearSearch,
+  });
+
+  final String periodLabel;
+  final int selectedCount;
+  final TextEditingController searchController;
+  final VoidCallback onPreviousMonth;
+  final VoidCallback onNextMonth;
+  final VoidCallback onPickMonth;
+  final ValueChanged<String> onSearchChanged;
+  final VoidCallback onClearSearch;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              IconButton(
+                onPressed: onPreviousMonth,
+                icon: const Icon(Icons.chevron_left),
+                color: const Color(0xFF51627A),
+              ),
+              Expanded(
+                child: InkWell(
+                  onTap: onPickMonth,
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF3FF),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.calendar_month_rounded,
+                          size: 18,
+                          color: Color(0xFF126ED3),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            periodLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: const Color(0xFF071A3A),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: onNextMonth,
+                icon: const Icon(Icons.chevron_right),
+                color: const Color(0xFF51627A),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: searchController,
+            textInputAction: TextInputAction.search,
+            onChanged: onSearchChanged,
+            decoration: InputDecoration(
+              hintText: 'Cari nama atau KTA',
+              prefixIcon: const Icon(Icons.search_rounded),
+              suffixIcon: searchController.text.isNotEmpty
+                  ? IconButton(
+                      tooltip: 'Hapus pencarian',
+                      onPressed: onClearSearch,
+                      icon: const Icon(Icons.close_rounded),
+                    )
+                  : selectedCount > 0
+                  ? Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Center(
+                        widthFactor: 1,
+                        child: Text(
+                          '$selectedCount dipilih',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: const Color(0xFF126ED3),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    )
+                  : null,
+              filled: true,
+              fillColor: const Color(0xFFF6F9FD),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(color: Color(0xFFDDE8F5)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(color: Color(0xFFDDE8F5)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderStat extends StatelessWidget {
+  const _HeaderStat({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.textColor,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+  final Color? textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = textColor ?? color;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.86),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminDueCard extends StatelessWidget {
+  const _AdminDueCard({
+    required this.memberName,
+    required this.memberInfo,
+    required this.amountLabel,
+    required this.status,
+    required this.canSelect,
+    required this.selected,
+    required this.onSelectedChanged,
+  });
+
+  final String memberName;
+  final String memberInfo;
+  final String amountLabel;
+  final String status;
+  final bool canSelect;
+  final bool selected;
+  final ValueChanged<bool?>? onSelectedChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFDDE8F5)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0B3A75).withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          if (canSelect) ...[
+            Checkbox(
+              value: selected,
+              onChanged: onSelectedChanged,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+            const SizedBox(width: 4),
+          ] else ...[
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF3FF),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.person_rounded, color: Color(0xFF126ED3)),
+            ),
+            const SizedBox(width: 12),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  memberName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF071A3A),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  memberInfo,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF5C6D86),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              DuesStatusBadge(status: status),
+              const SizedBox(height: 8),
+              Text(
+                amountLabel,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: const Color(0xFF3F4C60),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

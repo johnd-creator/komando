@@ -41,26 +41,55 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
     context.read<FinanceBloc>().add(FinanceKeuanganFiltersChanged(filters));
   }
 
+  String _summaryScopeLabel(List<FinanceUnitModel> units, int? selectedUnitId) {
+    if (selectedUnitId == null) return 'Semua Unit';
+    final matches = units.where((unit) => unit.id == selectedUnitId);
+    if (matches.isEmpty) return 'Unit terpilih';
+    final unit = matches.first;
+    return unit.isPusat ? '${unit.name} (Pusat)' : unit.name;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Keuangan')),
+      backgroundColor: const Color(0xFFF3F7FC),
       body: BlocBuilder<FinanceBloc, FinanceState>(
         builder: (context, state) {
           if (state is FinanceLoading || state is FinanceInitial) {
-            return const LoadingState(message: 'Memuat data keuangan...');
+            return const Column(
+              children: [
+                _FinanceHeader(),
+                Expanded(
+                  child: LoadingState(message: 'Memuat data keuangan...'),
+                ),
+              ],
+            );
           }
 
           if (state is FinanceFailure) {
             if (_isUnavailableMessage(state.message)) {
-              return _FinanceUnavailable(
-                onDuesTap: () {
-                  context.go(AppRoutes.iuran);
-                },
+              return Column(
+                children: [
+                  const _FinanceHeader(),
+                  Expanded(
+                    child: _FinanceUnavailable(
+                      onDuesTap: () {
+                        context.go(AppRoutes.iuran);
+                      },
+                    ),
+                  ),
+                ],
               );
             }
 
-            return ErrorState(message: state.message, onRetry: _reload);
+            return Column(
+              children: [
+                const _FinanceHeader(),
+                Expanded(
+                  child: ErrorState(message: state.message, onRetry: _reload),
+                ),
+              ],
+            );
           }
 
           if (state is! FinanceKeuanganLoaded) {
@@ -69,93 +98,87 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
 
           final data = state;
           final colorScheme = Theme.of(context).colorScheme;
-
-          if (data.items.isEmpty) {
-            return RefreshIndicator(
-              onRefresh: () async => _reload(),
-              child: ListView(
-                children: [
-                  _DashboardCards(dashboard: data.dashboard),
-                  _FilterBar(
-                    units: data.units.units,
-                    selectedUnitId: _selectedUnitId,
-                    selectedType: _selectedType,
-                    selectedStatus: _selectedStatus,
-                    onUnitChanged: (v) {
-                      setState(() => _selectedUnitId = v);
-                      _applyFilters();
-                    },
-                    onTypeChanged: (v) {
-                      setState(() => _selectedType = v);
-                      _applyFilters();
-                    },
-                    onStatusChanged: (v) {
-                      setState(() => _selectedStatus = v);
-                      _applyFilters();
-                    },
-                  ),
-                  const SizedBox(height: 120),
-                  const EmptyState(
-                    title: 'Belum ada transaksi',
-                    message: 'Transaksi keuangan akan tampil di sini.',
-                  ),
-                ],
-              ),
-            );
+          final stateUnitId = data.filters['unit_id'] as int?;
+          if (_selectedUnitId == null && stateUnitId != null) {
+            _selectedUnitId = stateUnitId;
           }
+          final effectiveSelectedUnitId = _selectedUnitId ?? stateUnitId;
+          final summaryScopeLabel = _summaryScopeLabel(
+            data.units.units,
+            effectiveSelectedUnitId,
+          );
 
-          return RefreshIndicator(
-            onRefresh: () async => _reload(),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: 2 + data.items.length + (data.hasMore ? 1 : 0),
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return _DashboardCards(dashboard: data.dashboard);
-                }
+          final filterBar = _FilterBar(
+            units: data.units.units,
+            selectedUnitId: effectiveSelectedUnitId,
+            selectedType: _selectedType,
+            selectedStatus: _selectedStatus,
+            onUnitChanged: (v) {
+              setState(() => _selectedUnitId = v);
+              _applyFilters();
+            },
+            onTypeChanged: (v) {
+              setState(() => _selectedType = v);
+              _applyFilters();
+            },
+            onStatusChanged: (v) {
+              setState(() => _selectedStatus = v);
+              _applyFilters();
+            },
+          );
 
-                if (index == 1) {
-                  return _FilterBar(
-                    units: data.units.units,
-                    selectedUnitId: _selectedUnitId,
-                    selectedType: _selectedType,
-                    selectedStatus: _selectedStatus,
-                    onUnitChanged: (v) {
-                      setState(() => _selectedUnitId = v);
-                      _applyFilters();
+          return Column(
+            children: [
+              const _FinanceHeader(),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async => _reload(),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+                    itemCount: data.items.isEmpty
+                        ? 3
+                        : 2 + data.items.length + (data.hasMore ? 1 : 0),
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return _DashboardCards(
+                          dashboard: data.dashboard,
+                          scopeLabel: summaryScopeLabel,
+                        );
+                      }
+
+                      if (index == 1) return filterBar;
+
+                      if (data.items.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.only(top: 80),
+                          child: EmptyState(
+                            title: 'Belum ada transaksi',
+                            message: 'Transaksi keuangan akan tampil di sini.',
+                          ),
+                        );
+                      }
+
+                      final itemIndex = index - 2;
+                      if (data.hasMore && itemIndex >= data.items.length) {
+                        return Center(
+                          child: TextButton.icon(
+                            onPressed: _reload,
+                            icon: const Icon(Icons.expand_more_rounded),
+                            label: const Text('Muat lagi'),
+                          ),
+                        );
+                      }
+
+                      return _LedgerCard(
+                        ledger: data.items[itemIndex],
+                        colorScheme: colorScheme,
+                      );
                     },
-                    onTypeChanged: (v) {
-                      setState(() => _selectedType = v);
-                      _applyFilters();
-                    },
-                    onStatusChanged: (v) {
-                      setState(() => _selectedStatus = v);
-                      _applyFilters();
-                    },
-                  );
-                }
-
-                final itemIndex = index - 2;
-                if (data.hasMore && itemIndex >= data.items.length) {
-                  return Center(
-                    child: TextButton.icon(
-                      onPressed: () {
-                        // Not directly supported in current bloc — reload
-                        _reload();
-                      },
-                      icon: const Icon(Icons.expand_more_rounded),
-                      label: const Text('Muat lagi'),
-                    ),
-                  );
-                }
-
-                return _LedgerCard(
-                  ledger: data.items[itemIndex],
-                  colorScheme: colorScheme,
-                );
-              },
-            ),
+                  ),
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -170,6 +193,12 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
             onPressed: () => context.push(AppRoutes.financeLedgerCreate),
             icon: const Icon(Icons.add),
             label: const Text('Transaksi Baru'),
+            backgroundColor: const Color(0xFF126ED3),
+            foregroundColor: Colors.white,
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(22),
+            ),
           );
         },
       ),
@@ -180,6 +209,99 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
 bool _isUnavailableMessage(String message) {
   final normalized = message.toLowerCase();
   return normalized.contains('data tidak ditemukan');
+}
+
+class _FinanceHeader extends StatelessWidget {
+  const _FinanceHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      height: MediaQuery.paddingOf(context).top + 190,
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0B67C8), Color(0xFF228CE5)],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.24,
+              child: Transform.scale(
+                scale: 1.18,
+                child: Image.asset(
+                  'assets/bg-asset.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const Icon(Icons.arrow_back),
+                        color: Colors.white,
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.12),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Keuangan',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Transaksi',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Kelola pemasukan, pengeluaran, dan approval.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.86),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _FinanceUnavailable extends StatelessWidget {
@@ -230,63 +352,117 @@ class _FinanceUnavailable extends StatelessWidget {
 }
 
 class _DashboardCards extends StatelessWidget {
-  const _DashboardCards({required this.dashboard});
+  const _DashboardCards({required this.dashboard, required this.scopeLabel});
 
   final FinanceDashboardModel dashboard;
+  final String scopeLabel;
 
   @override
   Widget build(BuildContext context) {
     final s = dashboard.summary;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Ringkasan Keuangan',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 12),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final cardWidth = (constraints.maxWidth - 12) / 2;
-            return Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _SummaryTile(
-                  width: cardWidth,
-                  label: 'Saldo',
-                  value: 'Rp ${_formatAmount(s.balance)}',
-                  icon: Icons.account_balance_wallet_outlined,
-                  color: colorScheme.primary,
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFDDE8F5)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0B3A75).withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Ringkasan Keuangan',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF071A3A),
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-                _SummaryTile(
-                  width: cardWidth,
-                  label: 'Pemasukan Bulan Ini',
-                  value: 'Rp ${_formatAmount(s.incomeThisMonth)}',
-                  icon: Icons.trending_up_rounded,
-                  color: Colors.green,
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 160),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAF3FF),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    scopeLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: const Color(0xFF126ED3),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
-                _SummaryTile(
-                  width: cardWidth,
-                  label: 'Pengeluaran Bulan Ini',
-                  value: 'Rp ${_formatAmount(s.expenseThisMonth)}',
-                  icon: Icons.trending_down_rounded,
-                  color: Colors.red,
-                ),
-                _SummaryTile(
-                  width: cardWidth,
-                  label: 'Menunggu Approval',
-                  value: s.pendingCount.toString(),
-                  icon: Icons.hourglass_bottom_rounded,
-                  color: Colors.orange,
-                ),
-              ],
-            );
-          },
-        ),
-      ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Informasi mengikuti filter unit yang dipilih.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF5C6D86)),
+          ),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cardWidth = (constraints.maxWidth - 12) / 2;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _SummaryTile(
+                    width: cardWidth,
+                    label: 'Saldo',
+                    value: 'Rp ${_formatAmount(s.balance)}',
+                    icon: Icons.account_balance_wallet_outlined,
+                    color: colorScheme.primary,
+                  ),
+                  _SummaryTile(
+                    width: cardWidth,
+                    label: 'Pemasukan Bulan Ini',
+                    value: 'Rp ${_formatAmount(s.incomeThisMonth)}',
+                    icon: Icons.trending_up_rounded,
+                    color: Colors.green,
+                  ),
+                  _SummaryTile(
+                    width: cardWidth,
+                    label: 'Pengeluaran Bulan Ini',
+                    value: 'Rp ${_formatAmount(s.expenseThisMonth)}',
+                    icon: Icons.trending_down_rounded,
+                    color: Colors.red,
+                  ),
+                  _SummaryTile(
+                    width: cardWidth,
+                    label: 'Menunggu Approval',
+                    value: s.pendingCount.toString(),
+                    icon: Icons.hourglass_bottom_rounded,
+                    color: Colors.orange,
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -310,33 +486,44 @@ class _SummaryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: width,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 8),
-              Text(
-                value,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF6F9FD),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE2ECF7)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-            ],
-          ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
@@ -364,22 +551,55 @@ class _FilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Transaksi', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        if (units.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: DropdownButtonFormField<int>(
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFDDE8F5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.tune_rounded,
+                size: 20,
+                color: Color(0xFF126ED3),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Filter Transaksi',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: const Color(0xFF071A3A),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          if (units.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
               initialValue: selectedUnitId,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Unit',
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(
+                filled: true,
+                fillColor: const Color(0xFFF6F9FD),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFFDDE8F5)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: Color(0xFFDDE8F5)),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 8,
+                  vertical: 10,
                 ),
               ),
               items: [
@@ -393,49 +613,85 @@ class _FilterBar extends StatelessWidget {
               ],
               onChanged: onUnitChanged,
             ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _FinanceFilterChip(
+                label: 'Semua',
+                selected: selectedType == null,
+                onTap: () => onTypeChanged(null),
+              ),
+              _FinanceFilterChip(
+                label: 'Pemasukan',
+                selected: selectedType == 'income',
+                onTap: () => onTypeChanged('income'),
+              ),
+              _FinanceFilterChip(
+                label: 'Pengeluaran',
+                selected: selectedType == 'expense',
+                onTap: () => onTypeChanged('expense'),
+              ),
+            ],
           ),
-        Wrap(
-          spacing: 8,
-          children: [
-            ChoiceChip(
-              label: const Text('Semua'),
-              selected: selectedType == null,
-              onSelected: (_) => onTypeChanged(null),
-            ),
-            ChoiceChip(
-              label: const Text('Pemasukan'),
-              selected: selectedType == 'income',
-              onSelected: (_) => onTypeChanged('income'),
-            ),
-            ChoiceChip(
-              label: const Text('Pengeluaran'),
-              selected: selectedType == 'expense',
-              onSelected: (_) => onTypeChanged('expense'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Wrap(
-          spacing: 8,
-          children: [
-            ChoiceChip(
-              label: const Text('Semua Status'),
-              selected: selectedStatus == null,
-              onSelected: (_) => onStatusChanged(null),
-            ),
-            ChoiceChip(
-              label: const Text('Disetujui'),
-              selected: selectedStatus == 'approved',
-              onSelected: (_) => onStatusChanged('approved'),
-            ),
-            ChoiceChip(
-              label: const Text('Menunggu'),
-              selected: selectedStatus == 'submitted',
-              onSelected: (_) => onStatusChanged('submitted'),
-            ),
-          ],
-        ),
-      ],
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _FinanceFilterChip(
+                label: 'Semua Status',
+                selected: selectedStatus == null,
+                onTap: () => onStatusChanged(null),
+              ),
+              _FinanceFilterChip(
+                label: 'Disetujui',
+                selected: selectedStatus == 'approved',
+                onTap: () => onStatusChanged('approved'),
+              ),
+              _FinanceFilterChip(
+                label: 'Menunggu',
+                selected: selectedStatus == 'submitted',
+                onTap: () => onStatusChanged('submitted'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FinanceFilterChip extends StatelessWidget {
+  const _FinanceFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      showCheckmark: false,
+      selectedColor: const Color(0xFF126ED3),
+      backgroundColor: Colors.white,
+      side: BorderSide(
+        color: selected ? const Color(0xFF126ED3) : const Color(0xFFDDE8F5),
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+        color: selected ? Colors.white : const Color(0xFF51627A),
+        fontWeight: FontWeight.w800,
+      ),
     );
   }
 }
@@ -449,41 +705,93 @@ class _LedgerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIncome = ledger.type == 'income';
+    final typeColor = isIncome
+        ? const Color(0xFF159B56)
+        : const Color(0xFFE0443E);
+    final typeBg = isIncome ? const Color(0xFFE8F7EE) : const Color(0xFFFFEDEA);
+    final title = ledger.description.isNotEmpty
+        ? ledger.description
+        : 'Tanpa deskripsi';
 
-    return Card(
-      child: ListTile(
-        onTap: () => context.push(AppRoutes.financeLedgerDetail(ledger.id)),
-        leading: CircleAvatar(
-          backgroundColor: isIncome ? Colors.green.shade50 : Colors.red.shade50,
-          child: Icon(
-            isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-            color: isIncome ? Colors.green : Colors.red,
-          ),
+    return InkWell(
+      onTap: () => context.push(AppRoutes.financeLedgerDetail(ledger.id)),
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFDDE8F5)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0B3A75).withValues(alpha: 0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        title: Text(
-          ledger.description.isNotEmpty
-              ? ledger.description
-              : 'Tanpa deskripsi',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          [ledger.date, if (ledger.unit != null) ledger.unit!.name].join(' · '),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
+        child: Row(
           children: [
-            Text(
-              '${isIncome ? '+' : '-'}Rp ${_formatAmount(ledger.amount)}',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: isIncome ? Colors.green : Colors.red,
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: typeBg,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                isIncome
+                    ? Icons.arrow_downward_rounded
+                    : Icons.arrow_upward_rounded,
+                color: typeColor,
               ),
             ),
-            const SizedBox(height: 4),
-            _StatusBadge(status: ledger.status),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: const Color(0xFF071A3A),
+                      fontWeight: FontWeight.w900,
+                      height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    [
+                      ledger.date,
+                      if (ledger.categoryName.isNotEmpty) ledger.categoryName,
+                      if (ledger.unit != null) ledger.unit!.name,
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF5C6D86),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${isIncome ? '+' : '-'}Rp ${_formatAmount(ledger.amount)}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: typeColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _StatusBadge(status: ledger.status),
+              ],
+            ),
           ],
         ),
       ),
