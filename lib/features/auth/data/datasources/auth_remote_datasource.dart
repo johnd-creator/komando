@@ -13,15 +13,29 @@ class AuthRemoteDataSource {
     required String password,
     required String deviceName,
   }) async {
+    // Explicitly exclude Authorization header for login requests.
+    // A stale token in storage must not be forwarded to the login endpoint,
+    // as some backends reject authenticated requests on /auth/login.
     final response = await _apiClient.dio.post<Map<String, dynamic>>(
       '/auth/login',
       data: {'email': email, 'password': password, 'device_name': deviceName},
+      options: Options(
+        headers: {'Authorization': null},
+        extra: {'skipAuth': true},
+      ),
     );
 
     final data = response.data ?? <String, dynamic>{};
+    final token = data['access_token'] as String? ?? '';
+    final userJson = data['user'];
+    if (token.isEmpty) {
+      throw Exception('Access token kosong dari server.');
+    }
     return (
-      accessToken: data['access_token'] as String? ?? '',
-      user: AppUserModel.fromJson(data['user'] as Map<String, dynamic>? ?? {}),
+      accessToken: token,
+      user: AppUserModel.fromJson(
+        userJson is Map<String, dynamic> ? userJson : {},
+      ),
     );
   }
 
@@ -44,15 +58,27 @@ class AuthRemoteDataSource {
       body['server_auth_code'] = code;
     }
 
+    // Also exclude Authorization header for Google token exchange.
     final response = await _apiClient.dio.post<Map<String, dynamic>>(
       '/auth/google/token',
       data: body,
+      options: Options(
+        headers: {'Authorization': null},
+        extra: {'skipAuth': true},
+      ),
     );
 
     final data = response.data ?? <String, dynamic>{};
+    final token = data['access_token'] as String? ?? '';
+    final userJson = data['user'];
+    if (token.isEmpty) {
+      throw Exception('Access token kosong dari server.');
+    }
     return (
-      accessToken: data['access_token'] as String? ?? '',
-      user: AppUserModel.fromJson(data['user'] as Map<String, dynamic>? ?? {}),
+      accessToken: token,
+      user: AppUserModel.fromJson(
+        userJson is Map<String, dynamic> ? userJson : {},
+      ),
     );
   }
 

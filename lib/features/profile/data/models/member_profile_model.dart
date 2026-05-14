@@ -11,6 +11,9 @@ class MemberProfileModel {
     required this.status,
     required this.memberNumber,
     required this.photoUrl,
+    required this.unionPosition,
+    required this.jobTitle,
+    required this.emergencyContact,
   });
 
   final String name;
@@ -21,6 +24,9 @@ class MemberProfileModel {
   final String status;
   final String memberNumber;
   final String? photoUrl;
+  final String unionPosition;
+  final String jobTitle;
+  final String emergencyContact;
 
   factory MemberProfileModel.fromCache(Map<String, dynamic> json) {
     return MemberProfileModel(
@@ -32,6 +38,11 @@ class MemberProfileModel {
       status: readString(json, const ['status']),
       memberNumber: readString(json, const ['member_number']),
       photoUrl: json['photo_url'] as String?,
+      unionPosition: readString(json, const ['union_position'], fallback: '-'),
+      jobTitle: readString(json, const ['job_title'], fallback: '-'),
+      emergencyContact: readString(json, const [
+        'emergency_contact',
+      ], fallback: '-'),
     );
   }
 
@@ -48,6 +59,8 @@ class MemberProfileModel {
         : readMap(data, 'unit').isNotEmpty
         ? readMap(data, 'unit')
         : readMap(member, 'unit');
+
+    final unionPositionMap = readMap(member, 'union_position');
 
     final rawPhotoUrl = member['photo_url'];
     final relativePhotoUrl = rawPhotoUrl is String && rawPhotoUrl.isNotEmpty
@@ -87,6 +100,18 @@ class MemberProfileModel {
         'member_number',
       ], fallback: '-'),
       photoUrl: photoUrl,
+      unionPosition: readString(
+        unionPositionMap.isNotEmpty ? unionPositionMap : member,
+        const ['name', 'union_position'],
+        fallback: 'Anggota',
+      ),
+      jobTitle: readString(member, const [
+        'job_title',
+        'position',
+      ], fallback: '-'),
+      emergencyContact: readString(member, const [
+        'emergency_contact',
+      ], fallback: '-'),
     );
   }
 
@@ -100,6 +125,9 @@ class MemberProfileModel {
       'status': status,
       'member_number': memberNumber,
       'photo_url': photoUrl,
+      'union_position': unionPosition,
+      'job_title': jobTitle,
+      'emergency_contact': emergencyContact,
     };
   }
 }

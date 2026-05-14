@@ -22,9 +22,18 @@ class ApiClient {
     this.dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final token = await this.tokenStorage.readAccessToken();
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
+          // Skip auth header injection for login/token-exchange endpoints.
+          // Sending a stale token on these endpoints can cause the backend
+          // to treat the request as already-authenticated and reject it.
+          final skipAuth = options.extra['skipAuth'] == true;
+          if (!skipAuth) {
+            final token = await this.tokenStorage.readAccessToken();
+            if (token != null && token.isNotEmpty) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
+          } else {
+            // Ensure no Authorization header leaks through (e.g. from BaseOptions)
+            options.headers.remove('Authorization');
           }
           handler.next(options);
         },

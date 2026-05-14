@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/constants/api_constants.dart';
@@ -42,10 +43,13 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
     context.read<AuthBloc>().add(
       AuthLoginRequested(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: email,
+        password: password,
         rememberAccount: false,
         enableBiometric: false,
       ),
@@ -387,13 +391,20 @@ class _LoginCard extends StatelessWidget {
             _LoginField(
               controller: emailController,
               isShort: isShort,
-              hintText: 'Masukkan email Anda',
+              hintText: 'Masukkan email akun',
               icon: Icons.mail_outline_rounded,
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
+              inputFormatters: [
+                FilteringTextInputFormatter.deny(RegExp(r'\s')),
+              ],
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
+                final email = value?.trim() ?? '';
+                if (email.isEmpty) {
                   return 'Email wajib diisi';
+                }
+                if (!email.contains('@')) {
+                  return 'Gunakan email akun, bukan username/NIP';
                 }
                 return null;
               },
@@ -404,6 +415,7 @@ class _LoginCard extends StatelessWidget {
               isShort: isShort,
               hintText: 'Masukkan password Anda',
               icon: Icons.lock_outline_rounded,
+              keyboardType: TextInputType.visiblePassword,
               obscureText: obscurePassword,
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => isLoading ? null : onSubmit(),
@@ -520,6 +532,7 @@ class _LoginField extends StatelessWidget {
     this.suffixIcon,
     this.validator,
     this.onFieldSubmitted,
+    this.inputFormatters,
   });
 
   final TextEditingController controller;
@@ -532,6 +545,7 @@ class _LoginField extends StatelessWidget {
   final Widget? suffixIcon;
   final FormFieldValidator<String>? validator;
   final ValueChanged<String>? onFieldSubmitted;
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -554,6 +568,10 @@ class _LoginField extends StatelessWidget {
               keyboardType: keyboardType,
               textInputAction: textInputAction,
               obscureText: obscureText,
+              autocorrect: false,
+              enableSuggestions: false,
+              textCapitalization: TextCapitalization.none,
+              inputFormatters: inputFormatters,
               validator: validator,
               onFieldSubmitted: onFieldSubmitted,
               style: textTheme.bodyMedium?.copyWith(

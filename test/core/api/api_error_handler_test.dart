@@ -74,7 +74,7 @@ void main() {
         requestOptions: RequestOptions(),
       );
       final message = ApiErrorHandler.getMessage(error);
-      expect(message, 'Periksa kembali data yang Anda isi.');
+      expect(message, 'Email atau password salah. Silakan periksa kembali.');
     });
 
     test('429 returns rate limit message', () {

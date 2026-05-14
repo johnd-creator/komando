@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../../core/cache/app_cache.dart';
 import '../../../../core/security/biometric_auth_service.dart';
 import '../../../../core/security/token_storage.dart';
@@ -31,7 +33,14 @@ class AuthRepositoryImpl implements AuthRepository {
     bool enableBiometric = false,
   }) async {
     final normalizedEmail = email.trim();
+
+    // Clear any existing session (token, biometric flag, cache) BEFORE
+    // sending the login request. This prevents a stale Google SSO token
+    // from being forwarded to the login endpoint by the Dio interceptor.
     await _clearSavedSession();
+    debugPrint(
+      '[AuthRepo] login: session cleared, sending request for $normalizedEmail',
+    );
 
     final result = await _remoteDataSource.login(
       email: normalizedEmail,
@@ -43,6 +52,8 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     await _tokenStorage.saveAccessToken(result.accessToken);
+    debugPrint('[AuthRepo] login: token saved');
+
     if (rememberAccount || enableBiometric) {
       await _tokenStorage.saveRememberedEmail(normalizedEmail);
     } else {
@@ -87,7 +98,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required String idToken,
     String? serverAuthCode,
   }) async {
+    // Same as manual login: clear session first so no stale token is sent.
     await _clearSavedSession();
+    debugPrint(
+      '[AuthRepo] loginWithGoogle: session cleared, sending Google token',
+    );
 
     final result = await _remoteDataSource.googleLogin(
       idToken: idToken,
@@ -98,6 +113,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     await _tokenStorage.saveAccessToken(result.accessToken);
+    debugPrint('[AuthRepo] loginWithGoogle: token saved');
     return result.user;
   }
 
