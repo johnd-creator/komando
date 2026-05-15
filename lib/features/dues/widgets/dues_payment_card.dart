@@ -14,10 +14,6 @@ class DuesPaymentCard extends StatelessWidget {
   final DuesPayment payment;
   final bool isLast;
 
-  String _formatAmount(double amount) {
-    return formatRupiah(amount);
-  }
-
   @override
   Widget build(BuildContext context) {
     final isPaid = payment.isPaid;
@@ -181,7 +177,7 @@ class DuesPaymentCard extends StatelessWidget {
                 if (isPaid && payment.amount > 0) ...[
                   const SizedBox(height: 8),
                   Text(
-                    _formatAmount(payment.amount),
+                    formatRupiah(payment.amount),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,

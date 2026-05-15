@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/utils/currency.dart';
+import '../../../../core/utils/date_period.dart';
 import '../../../../shared/presentation/widgets/empty_state.dart';
 import '../../../../shared/presentation/widgets/error_state.dart';
 import '../../../../shared/presentation/widgets/loading_state.dart';
@@ -147,7 +149,7 @@ class _SummaryCard extends StatelessWidget {
                       Text(
                         summary.currentPeriod.isEmpty
                             ? 'Status Iuran'
-                            : 'Status Iuran ${_formatPeriod(summary.currentPeriod)}',
+                            : 'Status Iuran ${formatPeriod(summary.currentPeriod)}',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 6),
@@ -177,7 +179,7 @@ class _SummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Iuran bulanan: Rp ${_formatAmount(currentAmount)}',
+              'Iuran bulanan: ${formatRupiah(currentAmount)}',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -206,7 +208,7 @@ class _SummaryCard extends StatelessWidget {
                 const SizedBox(width: 24),
                 _StatItem(
                   label: 'Total',
-                  value: 'Rp ${_formatAmount(summary.totalAmount)}',
+                  value: formatRupiah(summary.totalAmount),
                   icon: Icons.payments_outlined,
                   color: colorScheme.primary,
                 ),
@@ -304,7 +306,7 @@ class _DueCard extends StatelessWidget {
             color: isPaid ? Colors.green : Colors.orange,
           ),
         ),
-        title: Text(_formatPeriod(due.period)),
+        title: Text(formatPeriod(due.period)),
         subtitle: Text(
           due.paidAt != null && due.paidAt!.isNotEmpty
               ? 'Dibayar: ${due.paidAt}'
@@ -315,7 +317,7 @@ class _DueCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              'Rp ${_formatAmount(due.amount)}',
+              formatRupiah(due.amount),
               style: Theme.of(context).textTheme.titleSmall,
             ),
             Container(
@@ -341,42 +343,4 @@ class _DueCard extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatAmount(double amount) {
-  if (amount == amount.roundToDouble()) {
-    return amount.toInt().toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    );
-  }
-  return amount
-      .toStringAsFixed(0)
-      .replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (m) => '${m[1]}.',
-      );
-}
-
-String _formatPeriod(String period) {
-  final parts = period.split('-');
-  if (parts.length != 2) return period;
-  final month = int.tryParse(parts[1]);
-  final year = parts[0];
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'Mei',
-    'Jun',
-    'Jul',
-    'Agu',
-    'Sep',
-    'Okt',
-    'Nov',
-    'Des',
-  ];
-  if (month == null || month < 1 || month > 12) return period;
-  return '${months[month - 1]} $year';
 }

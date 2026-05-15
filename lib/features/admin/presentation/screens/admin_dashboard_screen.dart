@@ -174,15 +174,14 @@ class _AdminHeader extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Opacity(
-            opacity: 0.24,
-            child: Transform.scale(
-              scale: 1.18,
-              child: Image.asset(
-                'assets/bg-asset.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-              ),
+          Transform.scale(
+            scale: 1.18,
+            child: Image.asset(
+              'assets/bg-asset.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+              color: Colors.white.withValues(alpha: 0.24),
+              colorBlendMode: BlendMode.modulate,
             ),
           ),
           SafeArea(

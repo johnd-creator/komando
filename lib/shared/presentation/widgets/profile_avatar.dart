@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/logging/app_logger.dart';
 import '../../../core/network/authenticated_image_provider.dart';
 import '../../../core/security/token_storage.dart';
 
@@ -38,11 +39,11 @@ class ProfileAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (photoUrl == null || photoUrl!.isEmpty) {
-      debugPrint('[ProfileAvatar] No photo URL, showing initials');
+      AppLogger.d('No photo URL, showing initials', tag: 'ProfileAvatar');
       return _buildInitials(context);
     }
 
-    debugPrint('[ProfileAvatar] Loading photo from: $photoUrl');
+    AppLogger.d('Loading photo', tag: 'ProfileAvatar');
     final colors = Theme.of(context).colorScheme;
 
     return CircleAvatar(
@@ -63,7 +64,6 @@ class ProfileAvatar extends StatelessWidget {
                 return child;
               }
               if (frame == null) {
-                // Still loading
                 return Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
@@ -76,7 +76,11 @@ class ProfileAvatar extends StatelessWidget {
               return child;
             },
             errorBuilder: (context, error, stackTrace) {
-              debugPrint('[ProfileAvatar] Error loading image: $error');
+              AppLogger.e(
+                'Error loading avatar',
+                error: error,
+                tag: 'ProfileAvatar',
+              );
               return Center(
                 child: Text(
                   _initial,

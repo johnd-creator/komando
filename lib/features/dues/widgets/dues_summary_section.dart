@@ -16,13 +16,6 @@ class DuesSummarySection extends StatelessWidget {
   final DuesSummary summary;
   final double defaultAmount;
 
-  String _formatAmount(double amount) {
-    if (amount <= 0) return '-';
-    return formatRupiah(amount);
-  }
-
-  String _formatPeriod(String period) => formatPeriod(period);
-
   @override
   Widget build(BuildContext context) {
     final isPaid = summary.currentStatus == 'paid';
@@ -127,7 +120,7 @@ class DuesSummarySection extends StatelessWidget {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              'Periode ${_formatPeriod(summary.currentPeriod)}',
+                              'Periode ${formatPeriod(summary.currentPeriod)}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
@@ -149,7 +142,7 @@ class DuesSummarySection extends StatelessWidget {
                           if (defaultAmount > 0) ...[
                             const SizedBox(height: 4),
                             Text(
-                              '${_formatAmount(defaultAmount)} / bulan',
+                              '${defaultAmount <= 0 ? '-' : formatRupiah(defaultAmount)} / bulan',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 13,
@@ -267,7 +260,7 @@ class DuesSummarySection extends StatelessWidget {
                               ],
                             ),
                             child: Text(
-                              _formatPeriod(p),
+                              formatPeriod(p),
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFFB91C1C),

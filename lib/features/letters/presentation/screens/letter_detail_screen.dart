@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/theme/app_colors.dart';
+
 import '../../../../shared/presentation/widgets/error_state.dart';
 import '../../../../shared/presentation/widgets/loading_state.dart';
 import '../bloc/letter_bloc.dart';
@@ -43,10 +45,10 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
 
   static const _statusColors = {
     'draft': Color(0xFF6B7280),
-    'submitted': Color(0xFFF97316),
-    'approved': Color(0xFF3B82F6),
-    'sent': Color(0xFF22C55E),
-    'rejected': Color(0xFFEF4444),
+    'submitted': AppColors.warning,
+    'approved': AppColors.info,
+    'sent': AppColors.success,
+    'rejected': AppColors.error,
   };
 
   static const _statusLabels = {
@@ -60,7 +62,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.surface,
       body: BlocConsumer<LetterBloc, LetterState>(
         listener: (context, state) {
           // Trigger animation once when detail loads — not inside builder
@@ -87,7 +89,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               SliverAppBar(
                 expandedHeight: 140,
                 pinned: true,
-                backgroundColor: const Color(0xFF1565C0),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 title: const Text(
                   'Detail Surat',
@@ -99,7 +101,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
+                        colors: [AppColors.primary, AppColors.primaryLight],
                       ),
                     ),
                     child: Stack(
@@ -306,7 +308,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                                   style: const TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1A1A2E),
+                                    color: AppColors.textPrimary,
                                     height: 1.3,
                                     letterSpacing: -0.5,
                                   ),
@@ -394,7 +396,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                                       Icon(
                                         Icons.article_outlined,
                                         size: 18,
-                                        color: Color(0xFF1565C0),
+                                        color: AppColors.primary,
                                       ),
                                       SizedBox(width: 8),
                                       Text(
@@ -402,7 +404,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xFF1565C0),
+                                          color: AppColors.primary,
                                         ),
                                       ),
                                     ],
@@ -509,12 +511,12 @@ class _StatusProgressBar extends StatelessWidget {
         ),
         child: const Row(
           children: [
-            Icon(Icons.cancel_outlined, color: Color(0xFFEF4444), size: 20),
+            Icon(Icons.cancel_outlined, color: AppColors.error, size: 20),
             SizedBox(width: 10),
             Text(
               'Surat ditolak',
               style: TextStyle(
-                color: Color(0xFFEF4444),
+                color: AppColors.error,
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
               ),
@@ -543,9 +545,7 @@ class _StatusProgressBar extends StatelessWidget {
               child: Container(
                 height: 3,
                 decoration: BoxDecoration(
-                  color: isCompleted
-                      ? const Color(0xFF1565C0)
-                      : Colors.grey.shade200,
+                  color: isCompleted ? AppColors.primary : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -564,23 +564,21 @@ class _StatusProgressBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: isCompleted
                       ? const LinearGradient(
-                          colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
+                          colors: [AppColors.primary, AppColors.primaryLight],
                         )
                       : null,
                   color: isCompleted ? null : Colors.grey.shade200,
                   shape: BoxShape.circle,
                   border: isCurrent
                       ? Border.all(
-                          color: const Color(0xFF1565C0).withValues(alpha: 0.3),
+                          color: AppColors.primary.withValues(alpha: 0.3),
                           width: 3,
                         )
                       : null,
                   boxShadow: isCompleted
                       ? [
                           BoxShadow(
-                            color: const Color(
-                              0xFF1565C0,
-                            ).withValues(alpha: 0.3),
+                            color: AppColors.primary.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -600,7 +598,7 @@ class _StatusProgressBar extends StatelessWidget {
                 _stepLabels[_steps[stepIndex]] ?? '',
                 style: TextStyle(
                   fontSize: 10,
-                  color: isCompleted ? const Color(0xFF1565C0) : Colors.grey,
+                  color: isCompleted ? AppColors.primary : Colors.grey,
                   fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
@@ -699,7 +697,7 @@ class _LetterBodyPreviewState extends State<_LetterBodyPreview>
               _expanded ? 'Tampilkan lebih sedikit' : 'Baca selengkapnya',
             ),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF1565C0),
+              foregroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               textStyle: const TextStyle(fontWeight: FontWeight.w800),
             ),
@@ -868,7 +866,7 @@ class _ActionButtons extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF1565C0).withValues(alpha: 0.05),
+              AppColors.primary.withValues(alpha: 0.05),
               Colors.transparent,
             ],
           ),
@@ -880,13 +878,13 @@ class _ActionButtons extends StatelessWidget {
             Navigator.of(context).pop();
           },
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF1565C0),
+            backgroundColor: AppColors.primary,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
             elevation: 4,
-            shadowColor: const Color(0xFF1565C0).withValues(alpha: 0.3),
+            shadowColor: AppColors.primary.withValues(alpha: 0.3),
           ),
           icon: const Icon(Icons.send_rounded, size: 22),
           label: const Text(
@@ -900,7 +898,7 @@ class _ActionButtons extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFFF97316).withValues(alpha: 0.05),
+              AppColors.warning.withValues(alpha: 0.05),
               Colors.transparent,
             ],
           ),
@@ -915,13 +913,13 @@ class _ActionButtons extends StatelessWidget {
                   Navigator.of(context).pop();
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF22C55E),
+                  backgroundColor: AppColors.success,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                   elevation: 4,
-                  shadowColor: const Color(0xFF22C55E).withValues(alpha: 0.3),
+                  shadowColor: AppColors.success.withValues(alpha: 0.3),
                 ),
                 icon: const Icon(Icons.check_rounded, size: 22),
                 label: const Text(
@@ -938,8 +936,8 @@ class _ActionButtons extends StatelessWidget {
                   Navigator.of(context).pop();
                 },
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFEF4444),
-                  side: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+                  foregroundColor: AppColors.error,
+                  side: const BorderSide(color: AppColors.error, width: 1.5),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -1035,7 +1033,7 @@ class _MetaRow extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A2E),
+                color: AppColors.textPrimary,
               ),
             ),
           ),

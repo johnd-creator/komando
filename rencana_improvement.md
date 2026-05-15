@@ -48,6 +48,14 @@
 - [x] **Batch 5.1** — Crash Reporter Setup
 - [x] **Batch 5.2** — Performance Monitoring & Cleanup Akhir
 
+### Phase 6 — Post-Execution Cleanup (Tambahan)
+- [x] **Batch 6.1** — Quick Fixes (debugPrint, formatAmount duplikasi)
+- [x] **Batch 6.2** — Opacity Widget Cleanup
+- [x] **Batch 6.3** — AppColors Migration (6 file terbesar)
+- [x] **Batch 6.4** — Split `home_screen.dart`
+- [x] **Batch 6.5** — Split `notification_screen.dart` & `keuangan_screen.dart`
+- [x] **Batch 6.6** — Test Coverage: Finance & Admin Bloc
+
 ---
 
 ## Phase 1 — Foundation & Safety
@@ -934,3 +942,357 @@ Kalau Claude gagal di tengah batch:
 |---|---|---|---|
 | _(diisi saat eksekusi)_ | | | |
 
+
+
+---
+
+## Phase 6 — Post-Execution Cleanup (Tambahan)
+
+> **Tujuan phase**: Menyelesaikan sisa temuan dari audit post-Phase 5. Quick fixes, migrasi AppColors ke modul lain, dan eliminasi `Opacity` widget decorative.
+
+### Status Tracking Phase 6
+
+- [ ] **Batch 6.1** — Quick Fixes (debugPrint, formatAmount duplikasi)
+- [ ] **Batch 6.2** — Opacity Widget Cleanup
+- [ ] **Batch 6.3** — AppColors Migration (6 file terbesar)
+- [ ] **Batch 6.4** — Split `home_screen.dart`
+- [ ] **Batch 6.5** — Split `notification_screen.dart` & `keuangan_screen.dart`
+- [ ] **Batch 6.6** — Test Coverage: Finance & Admin Bloc
+
+---
+
+### Batch 6.1 — Quick Fixes (debugPrint, formatAmount duplikasi)
+
+**Konteks**: Audit post-Phase 5 menemukan:
+- `profile_avatar.dart` masih pakai `debugPrint` (3 lokasi)
+- `iuran_screen.dart` masih punya `_formatAmount` dan `_formatPeriod` manual (TIDAK pakai utility global)
+- `dues_payment_card.dart` dan `dues_summary_section.dart` punya wrapper tipis yang bisa dihapus
+
+**Files affected**:
+- 🔧 `lib/shared/presentation/widgets/profile_avatar.dart` (line 42, 46, 80)
+- 🔧 `lib/features/finance/presentation/screens/iuran_screen.dart` (line 346-390)
+- 🔧 `lib/features/dues/widgets/dues_payment_card.dart` (line 17-19)
+- 🔧 `lib/features/dues/widgets/dues_summary_section.dart` (line 19-25)
+
+**Tugas**:
+1. `profile_avatar.dart`: ganti 3x `debugPrint(...)` dengan `AppLogger.d(...)` — jangan print URL foto (PII)
+2. `iuran_screen.dart`: hapus `_formatAmount` dan `_formatPeriod` lokal, import dan pakai `formatRupiah`/`formatPeriod` dari `core/utils/`
+3. `dues_payment_card.dart`: hapus method `_formatAmount`, panggil `formatRupiah(payment.amount)` langsung
+4. `dues_summary_section.dart`: hapus method `_formatAmount` dan `_formatPeriod`, panggil utility langsung
+
+**Definition of Done**:
+- ✅ `flutter analyze` — 0 issue
+- ✅ `grep -rn "debugPrint" lib/` hanya muncul di `app_logger.dart` dan `crash_reporter.dart`
+- ✅ `grep -rn "_formatAmount\|_formatPeriod" lib/` — hanya di `dues_admin_list_screen.dart` (signature berbeda: DateTime)
+
+**Prompt untuk Claude**:
+```
+Eksekusi Batch 6.1 dari rencana_improvement.md:
+
+1. lib/shared/presentation/widgets/profile_avatar.dart:
+   - Import AppLogger
+   - Ganti 3x debugPrint dengan AppLogger.d — JANGAN print URL foto (PII), cukup "Loading photo" / "No photo" / "Error loading"
+
+2. lib/features/finance/presentation/screens/iuran_screen.dart:
+   - Import formatRupiah dari core/utils/currency.dart
+   - Import formatPeriod dari core/utils/date_period.dart
+   - Hapus fungsi _formatAmount (line 346-360) dan _formatPeriod (line 361-390)
+   - Ganti semua call site _formatAmount → formatRupiah (tanpa prefix jika sudah ada 'Rp ')
+   - Ganti semua call site _formatPeriod → formatPeriod
+
+3. lib/features/dues/widgets/dues_payment_card.dart:
+   - Hapus method _formatAmount, panggil formatRupiah(payment.amount) langsung di build
+
+4. lib/features/dues/widgets/dues_summary_section.dart:
+   - Hapus method _formatAmount dan _formatPeriod
+   - Panggil formatRupiah/formatPeriod langsung
+
+Verifikasi: flutter analyze + flutter test
+```
+
+---
+
+### Batch 6.2 — Opacity Widget Cleanup
+
+**Konteks**: 4 file menggunakan `Opacity` widget untuk background decorative. Ini memaksa `saveLayer` setiap frame — overhead GPU yang tidak perlu.
+
+**Files affected**:
+- 🔧 `lib/features/admin/presentation/screens/admin_dashboard_screen.dart` (line 177-180)
+- 🔧 `lib/features/dues/screens/dues_admin_list_screen.dart` (line 331-334)
+- 🔧 `lib/features/finance/presentation/screens/keuangan_screen.dart` (line 238-241)
+- 🔧 `lib/features/finance/presentation/screens/ledger_form_screen.dart` (line 522-525)
+
+**Tugas**:
+Ganti pola:
+```dart
+Opacity(
+  opacity: 0.24,
+  child: Transform.scale(
+    scale: 1.18,
+    child: Image.asset('assets/bg-asset.png'),
+  ),
+)
+```
+Dengan:
+```dart
+Transform.scale(
+  scale: 1.18,
+  child: Image.asset(
+    'assets/bg-asset.png',
+    color: Colors.white.withValues(alpha: 0.24),
+    colorBlendMode: BlendMode.modulate,
+  ),
+)
+```
+Ini menghindari `saveLayer` karena opacity di-apply langsung ke pixel image.
+
+**Definition of Done**:
+- ✅ `flutter analyze` — 0 issue
+- ✅ `grep -rn "Opacity(" lib/` — hanya muncul di `notification_screen.dart` (AnimatedOpacity functional)
+- ✅ Manual test: tampilan background decorative identik secara visual
+
+**Prompt untuk Claude**:
+```
+Eksekusi Batch 6.2 dari rencana_improvement.md:
+
+Ganti Opacity widget decorative di 4 file berikut. Pattern yang dicari:
+  Opacity(opacity: 0.2x, child: Transform.scale(scale: 1.18, child: Image.asset(...)))
+
+Ganti dengan:
+  Transform.scale(scale: 1.18, child: Image.asset(..., color: Colors.white.withValues(alpha: 0.2x), colorBlendMode: BlendMode.modulate))
+
+Files:
+1. lib/features/admin/presentation/screens/admin_dashboard_screen.dart (~line 177)
+2. lib/features/dues/screens/dues_admin_list_screen.dart (~line 331)
+3. lib/features/finance/presentation/screens/keuangan_screen.dart (~line 238)
+4. lib/features/finance/presentation/screens/ledger_form_screen.dart (~line 522)
+
+JANGAN sentuh AnimatedOpacity di notification_screen.dart — itu functional.
+
+Verifikasi: flutter analyze + visual check background masih terlihat sama.
+```
+
+---
+
+### Batch 6.3 — AppColors Migration (6 file terbesar)
+
+**Konteks**: Batch 4.1 hanya migrasi modul Dues. Masih ada 6+ file dengan 20-50 Color literal masing-masing.
+
+**Files affected**:
+- 🔧 `lib/features/home/presentation/screens/home_screen.dart` (~50 literals)
+- 🔧 `lib/features/notifications/presentation/screens/notification_screen.dart` (~35 literals)
+- 🔧 `lib/features/admin/presentation/screens/member_list_screen.dart` (~25 literals)
+- 🔧 `lib/features/dues/screens/dues_admin_list_screen.dart` (~20 literals)
+- 🔧 `lib/features/admin/presentation/screens/admin_dashboard_screen.dart` (~20 literals)
+- 🔧 `lib/features/letters/presentation/screens/letter_detail_screen.dart` (~10 literals)
+
+**Tugas**:
+1. Import `AppColors` di setiap file
+2. Replace `Color(0xFF1565C0)` → `AppColors.primary`, dst.
+3. Jika ada warna yang belum ada di `AppColors`, tambahkan dulu ke `app_colors.dart`
+4. Visual TIDAK BOLEH berubah
+
+**Definition of Done**:
+- ✅ `flutter analyze` — 0 issue
+- ✅ Jumlah `Color(0xFF` di 6 file turun signifikan (target: <5 per file)
+- ✅ Manual test: tampilan identik
+
+**Prompt untuk Claude**:
+```
+Eksekusi Batch 6.3 dari rencana_improvement.md:
+
+Migrasi Color(0xFF...) literals ke AppColors di 6 file berikut.
+Mapping utama:
+- Color(0xFFF5F7FA) → AppColors.surface
+- Color(0xFF1565C0) → AppColors.primary
+- Color(0xFF1E88E5) → AppColors.primaryLight
+- Color(0xFF22C55E) → AppColors.success
+- Color(0xFFF97316) → AppColors.warning
+- Color(0xFFEF4444) → AppColors.error
+- Color(0xFF3B82F6) → AppColors.info
+- Color(0xFF1A1A2E) → AppColors.textPrimary
+- Color(0xFF536683) → AppColors.textSecondary
+- Color(0xFF64748B) → AppColors.textMuted
+- Color(0xFFE1E8F2) → AppColors.border
+- Color(0xFFF7F9FC) → AppColors.surfaceAlt
+
+Files (urutan prioritas):
+1. lib/features/home/presentation/screens/home_screen.dart
+2. lib/features/notifications/presentation/screens/notification_screen.dart
+3. lib/features/admin/presentation/screens/member_list_screen.dart
+4. lib/features/dues/screens/dues_admin_list_screen.dart
+5. lib/features/admin/presentation/screens/admin_dashboard_screen.dart
+6. lib/features/letters/presentation/screens/letter_detail_screen.dart
+
+Jika ada warna yang tidak ada di AppColors (mis. Color(0xFF0967D8) di notification), 
+tambahkan ke app_colors.dart sebagai token baru yang sesuai.
+
+PENTING: Visual tidak boleh berubah. Hanya replace literal → constant.
+
+Verifikasi: flutter analyze
+```
+
+---
+
+### Batch 6.4 — Split `home_screen.dart`
+
+**Konteks**: File ~1080 baris, berisi 6+ private widget besar. Pola sama seperti `my_dues_screen.dart` yang sudah berhasil dipecah.
+
+**Files affected**:
+- 🔧 `lib/features/home/presentation/screens/home_screen.dart`
+- ✏️ Buat baru: `lib/features/home/presentation/widgets/home_header.dart`
+- ✏️ Buat baru: `lib/features/home/presentation/widgets/feature_access_panel.dart`
+- ✏️ Buat baru: `lib/features/home/presentation/widgets/announcement_card.dart`
+- ✏️ Buat baru: `lib/features/home/presentation/widgets/latest_news_card.dart`
+- ✏️ Buat baru: `lib/features/home/presentation/widgets/kta_status_card.dart`
+
+**Tugas**:
+1. Extract `_HomeHeader` → `home_header.dart` (HomeHeader)
+2. Extract `_FeatureAccessPanel` → `feature_access_panel.dart` (FeatureAccessPanel)
+3. Extract `_AnnouncementCard` → `announcement_card.dart` (HomeAnnouncementCard)
+4. Extract `_LatestNewsCard` → `latest_news_card.dart` (LatestNewsCard)
+5. Extract `_KtaStatusCard` (jika ada) → `kta_status_card.dart`
+6. `home_screen.dart` jadi <250 baris
+
+**Definition of Done**:
+- ✅ `flutter analyze` — 0 issue
+- ✅ `home_screen.dart` < 250 baris
+- ✅ Manual test: Home tab berfungsi identik
+
+**Prompt untuk Claude**:
+```
+Eksekusi Batch 6.4 dari rencana_improvement.md:
+
+Split lib/features/home/presentation/screens/home_screen.dart (~1080 baris).
+
+Baca file dulu, identifikasi semua private widget class, lalu extract ke:
+- lib/features/home/presentation/widgets/home_header.dart (HomeHeader)
+- lib/features/home/presentation/widgets/feature_access_panel.dart (FeatureAccessPanel)
+- lib/features/home/presentation/widgets/announcement_card.dart (HomeAnnouncementCard)
+- lib/features/home/presentation/widgets/latest_news_card.dart (LatestNewsCard)
+- Dan widget private lainnya yang ditemukan
+
+Aturan:
+- Behavior dan tampilan tidak boleh berubah
+- Public widget tanpa prefix underscore
+- home_screen.dart jadi <250 baris (hanya orchestrator + state)
+- Pertahankan semua callback, navigation, dan bloc interaction
+
+Verifikasi: flutter analyze + manual test Home tab.
+```
+
+---
+
+### Batch 6.5 — Split `notification_screen.dart` & `keuangan_screen.dart`
+
+**Konteks**: Dua file besar (~940 dan ~840 baris) yang berisi banyak private widget.
+
+**Files affected**:
+- 🔧 `lib/features/notifications/presentation/screens/notification_screen.dart`
+- ✏️ Buat baru: `lib/features/notifications/presentation/widgets/` (3-4 file)
+- 🔧 `lib/features/finance/presentation/screens/keuangan_screen.dart`
+- ✏️ Buat baru: `lib/features/finance/presentation/widgets/` (3-4 file)
+
+**Tugas**:
+1. `notification_screen.dart`: extract `_NotificationTile`, `_SectionHeader`, `_NotificationVisual`, helper functions
+2. `keuangan_screen.dart`: extract `_FinanceSummaryCards`, `_LedgerCard`, `_FilterChips`, helper functions
+3. Kedua screen jadi <300 baris
+
+**Definition of Done**:
+- ✅ `flutter analyze` — 0 issue
+- ✅ Kedua file < 300 baris
+- ✅ Manual test: Notifikasi dan Keuangan berfungsi identik
+
+**Prompt untuk Claude**:
+```
+Eksekusi Batch 6.5 dari rencana_improvement.md:
+
+Split 2 file besar:
+
+1. lib/features/notifications/presentation/screens/notification_screen.dart (~940 baris):
+   - Baca file, identifikasi private widgets
+   - Extract ke lib/features/notifications/presentation/widgets/
+   - Target: notification_screen.dart < 300 baris
+
+2. lib/features/finance/presentation/screens/keuangan_screen.dart (~840 baris):
+   - Baca file, identifikasi private widgets
+   - Extract ke lib/features/finance/presentation/widgets/
+   - Target: keuangan_screen.dart < 300 baris
+
+Aturan:
+- Behavior dan tampilan tidak boleh berubah
+- Pertahankan semua bloc interaction dan navigation
+
+Verifikasi: flutter analyze + manual test kedua screen.
+```
+
+---
+
+### Batch 6.6 — Test Coverage: Finance & Admin Bloc
+
+**Konteks**: Hanya 3 dari 13 fitur yang punya test (auth, dues, news). Finance dan Admin punya logic kompleks tanpa test.
+
+**Files affected**:
+- ✏️ Buat baru: `test/features/finance/presentation/bloc/finance_bloc_test.dart`
+- ✏️ Buat baru: `test/features/admin/presentation/bloc/admin_bloc_test.dart`
+
+**Tugas**:
+1. `finance_bloc_test.dart`: test minimal untuk:
+   - Dashboard fetch success/failure
+   - Ledger list pagination
+   - Create ledger success
+2. `admin_bloc_test.dart`: test minimal untuk:
+   - Dashboard fetch
+   - Member list pagination
+   - Member detail fetch
+
+**Definition of Done**:
+- ✅ `flutter test test/features/finance/` pass
+- ✅ `flutter test test/features/admin/` pass
+- ✅ Minimal 3 test case per bloc
+
+**Prompt untuk Claude**:
+```
+Eksekusi Batch 6.6 dari rencana_improvement.md:
+
+Buat test minimal untuk 2 bloc yang belum punya test:
+
+1. test/features/finance/presentation/bloc/finance_bloc_test.dart:
+   - Baca FinanceBloc, FinanceEvent, FinanceState dulu
+   - Buat FakeFinanceRepository yang return data mock
+   - Test: dashboard fetch success, dashboard fetch failure, ledger list pagination
+
+2. test/features/admin/presentation/bloc/admin_bloc_test.dart:
+   - Baca AdminBloc, AdminEvent, AdminState dulu
+   - Buat FakeAdminRepository yang return data mock
+   - Test: dashboard fetch, member list pagination, member detail fetch
+
+Aturan:
+- Pakai pattern yang sama dengan test/features/dues/bloc/dues_admin_bloc_test.dart (FakeRepository)
+- Minimal 3 test case per file
+- Tidak perlu mock Dio — fake repository langsung return data
+
+Verifikasi: flutter test test/features/finance/ + flutter test test/features/admin/
+```
+
+---
+
+## Catatan Phase 6
+
+**Total estimasi Phase 6**: ~15-20 jam
+
+**Prioritas eksekusi**:
+1. **Batch 6.1** (30 menit) — quick fix, eliminasi inkonsistensi format
+2. **Batch 6.2** (1 jam) — performance gain langsung
+3. **Batch 6.3** (3-4 jam) — konsistensi visual code
+4. **Batch 6.4** (3-4 jam) — maintainability home screen
+5. **Batch 6.5** (5-6 jam) — maintainability 2 screen besar
+6. **Batch 6.6** (4-6 jam) — safety net untuk refactor berikutnya
+
+**Item yang MASIH ditunda** (butuh keputusan tim):
+- Standardisasi folder `dues/` → `data/domain/presentation`
+- ShellRoute untuk list-detail bloc sharing
+- Build flavors (dev/staging/prod)
+- Custom font (Inter/Manrope)
+- Migrasi news loading di home ke NewsBloc
+- Test coverage untuk 10 fitur lainnya
