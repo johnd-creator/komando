@@ -31,7 +31,29 @@ class LetterRepository {
       '/letters/$id',
     );
     final data = response.data ?? {};
-    final letterJson = data['letter'] as Map<String, dynamic>? ?? data;
+    final letterJson = Map<String, dynamic>.from(
+      data['letter'] as Map<String, dynamic>? ?? data,
+    );
+
+    try {
+      final preview = await _apiClient.dio.get<Map<String, dynamic>>(
+        '/letters/$id/preview',
+      );
+      final previewData = preview.data ?? {};
+      final previewLetter = previewData['letter'];
+      if (previewLetter is Map<String, dynamic>) {
+        letterJson.addAll(previewLetter);
+      }
+      final bodyHtml = readString(previewData, const [
+        'body_html',
+      ], fallback: '');
+      if (bodyHtml.isNotEmpty) {
+        letterJson['body_html'] = bodyHtml;
+      }
+    } catch (_) {
+      // The detail endpoint remains useful even if preview is unavailable.
+    }
+
     return LetterModel.fromJson(letterJson);
   }
 

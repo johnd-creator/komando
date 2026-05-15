@@ -4,7 +4,7 @@ import 'package:komando/features/auth/data/models/app_user_model.dart';
 void main() {
   group('AppUserModel', () {
     test('parses direct user payload with role object', () {
-      final user = AppUserModel.fromJson({
+      final user = AppUserModel.fromJson(const {
         'id': 1,
         'name': 'Super Admin',
         'email': 'admin@example.com',
@@ -17,7 +17,7 @@ void main() {
     });
 
     test('parses local /me payload wrapped in user key', () {
-      final user = AppUserModel.fromJson({
+      final user = AppUserModel.fromJson(const {
         'user': {
           'id': 1,
           'name': 'Super Admin',
@@ -31,7 +31,7 @@ void main() {
     });
 
     test('parses JsonResource style user.data wrapper', () {
-      final user = AppUserModel.fromJson({
+      final user = AppUserModel.fromJson(const {
         'user': {
           'data': {
             'id': 1,
@@ -47,7 +47,7 @@ void main() {
     });
 
     test('parses roles array fallback', () {
-      final user = AppUserModel.fromJson({
+      final user = AppUserModel.fromJson(const {
         'id': 1,
         'name': 'Super Admin',
         'email': 'admin@example.com',
@@ -61,14 +61,14 @@ void main() {
     });
 
     test('parses role_name and role string fallbacks', () {
-      final roleNameUser = AppUserModel.fromJson({
+      final roleNameUser = AppUserModel.fromJson(const {
         'id': 1,
         'name': 'Super Admin',
         'email': 'admin@example.com',
         'role_name': 'super_admin',
         'role_label': 'Super Admin',
       });
-      final roleStringUser = AppUserModel.fromJson({
+      final roleStringUser = AppUserModel.fromJson(const {
         'id': 2,
         'name': 'Super Admin',
         'email': 'admin2@example.com',
@@ -80,7 +80,7 @@ void main() {
     });
 
     test('parses member context unit fallback', () {
-      final user = AppUserModel.fromJson({
+      final user = AppUserModel.fromJson(const {
         'id': 1,
         'name': 'Bendahara Unit',
         'email': 'bendahara@example.com',

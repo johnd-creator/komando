@@ -202,19 +202,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     right: 0,
                     bottom: heroBottom - 1,
                     height: 80,
-                    child: DecoratedBox(
+                    child: const DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            const Color(0x33FFFFFF),
-                            const Color(0x88FFFFFF),
-                            const Color(0xCCFFFFFF),
-                            const Color(0xFFFFFFFF),
+                            Color(0x33FFFFFF),
+                            Color(0x88FFFFFF),
+                            Color(0xCCFFFFFF),
+                            Color(0xFFFFFFFF),
                           ],
-                          stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+                          stops: [0.0, 0.2, 0.5, 0.8, 1.0],
                         ),
                       ),
                     ),
@@ -275,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                  SizedBox.expand(),
+                  const SizedBox.expand(),
                 ],
               );
             },

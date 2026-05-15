@@ -1,11 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../../core/api/json_read.dart';
+import '../../../core/logging/app_logger.dart';
 import '../models/dues_admin_summary.dart';
 import '../models/dues_mass_update_item.dart';
 import '../models/dues_payment.dart';
 import '../models/dues_summary.dart';
+import '../models/my_dues_result.dart';
 
 class DuesRepository {
   final Dio _dio;
@@ -14,29 +15,40 @@ class DuesRepository {
 
   static const double fallbackDuesAmount = 50000;
 
-  Future<Map<String, dynamic>> getMyDues() async {
-    final response = await _dio.get<Map<String, dynamic>>('/dues');
+  Future<MyDuesResult> getMyDues() async {
+    // Run all 3 async calls in parallel to reduce load time on slow networks
+    final results = await Future.wait([
+      _dio.get<Map<String, dynamic>>('/dues'),
+      _readConfigDuesDefaultAmount(),
+      getDefaultDuesAmount(),
+    ]);
+
+    final response = results[0] as Response<Map<String, dynamic>>;
+    final configAmount = results[1] as double?;
+    final categoryAmount = results[2] as double?;
+
     final root = response.data ?? <String, dynamic>{};
     final data = _readDataMap(root);
     final payments = _readDataList(root, fallbackKey: 'payments');
     final apiDefaultAmount = readDouble(data, const ['default_amount']) > 0
         ? readDouble(data, const ['default_amount'])
         : readDouble(root, const ['default_amount']);
+
     final resolvedDefaultAmount = [
       fallbackDuesAmount,
       apiDefaultAmount,
-      ?await _readConfigDuesDefaultAmount(),
-      ?await getDefaultDuesAmount(),
+      ?configAmount,
+      ?categoryAmount,
     ].reduce((a, b) => a > b ? a : b);
 
-    return {
-      'hasMember': data['has_member'] ?? root['has_member'] ?? false,
-      'payments': payments.map(DuesPayment.fromJson).toList(),
-      'summary': _readNestedMap(root, key: 'summary') != null
+    return MyDuesResult(
+      hasMember: (data['has_member'] ?? root['has_member'] ?? false) as bool,
+      payments: payments.map(DuesPayment.fromJson).toList(),
+      summary: _readNestedMap(root, key: 'summary') != null
           ? DuesSummary.fromJson(_readNestedMap(root, key: 'summary')!)
           : null,
-      'defaultAmount': resolvedDefaultAmount,
-    };
+      defaultAmount: resolvedDefaultAmount,
+    );
   }
 
   Future<double?> getDefaultDuesAmount() async {
@@ -104,7 +116,8 @@ class DuesRepository {
       queryParameters['q'] = query.trim();
     }
 
-    debugPrint('[DuesRepo] GET /finance/dues params=$queryParameters');
+    AppLogger.api('GET', '/finance/dues', tag: 'DuesRepo');
+    AppLogger.d('params=$queryParameters', tag: 'DuesRepo');
 
     final response = await _dio.get<Map<String, dynamic>>(
       '/finance/dues',
@@ -115,7 +128,7 @@ class DuesRepository {
     final items = _extractPaginatedList(root);
     final meta = _extractPaginationMeta(root);
 
-    debugPrint('[DuesRepo] Parsed ${items.length} items, meta=$meta');
+    AppLogger.d('Parsed ${items.length} items', tag: 'DuesRepo');
 
     return {
       'payments': items.map(DuesPayment.fromJson).toList(),

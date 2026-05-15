@@ -32,8 +32,21 @@ class AppCache {
     return null;
   }
 
+  /// Writes [value] to cache, automatically injecting a `_cached_at` timestamp.
   Future<void> writeJson(String key, Map<String, dynamic> value) {
-    return _storage.write(key: key, value: jsonEncode(value));
+    final withMeta = Map<String, dynamic>.from(value)
+      ..['_cached_at'] = DateTime.now().toIso8601String();
+    return _storage.write(key: key, value: jsonEncode(withMeta));
+  }
+
+  /// Returns true if the cached entry for [key] is older than [maxAge],
+  /// or if no entry exists.
+  Future<bool> isStale(String key, Duration maxAge) async {
+    final raw = await readJson(key);
+    if (raw == null) return true;
+    final cachedAt = DateTime.tryParse(raw['_cached_at'] as String? ?? '');
+    if (cachedAt == null) return true;
+    return DateTime.now().difference(cachedAt) > maxAge;
   }
 
   Future<Uint8List?> readBytes(String key) async {

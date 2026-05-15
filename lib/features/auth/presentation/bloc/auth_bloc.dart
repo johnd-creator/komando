@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/api/api_error_handler.dart';
+import '../../../../core/observability/crash_reporter.dart';
 import '../../domain/usecases/biometric_login_usecase.dart';
 import '../../domain/usecases/get_login_preferences_usecase.dart';
 import '../../domain/usecases/google_login_usecase.dart';
@@ -52,6 +53,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthLoginOptionsLoaded(preferences));
         return;
       }
+      // Attach user ID to crash reports on session restore
+      await CrashReporter.setUserId(user.id.toString());
       emit(AuthAuthenticated(user));
     } catch (error) {
       emit(AuthFailure(ApiErrorHandler.getMessage(error)));
@@ -72,6 +75,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         rememberAccount: event.rememberAccount,
         enableBiometric: event.enableBiometric,
       );
+      // Attach user ID to crash reports on login
+      await CrashReporter.setUserId(user.id.toString());
       emit(AuthAuthenticated(user));
     } catch (error) {
       emit(AuthFailure(ApiErrorHandler.getMessage(error)));
@@ -98,6 +103,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
     try {
       final user = await _biometricLoginUseCase();
+      await CrashReporter.setUserId(user.id.toString());
       emit(AuthAuthenticated(user));
     } catch (error) {
       emit(AuthFailure(ApiErrorHandler.getMessage(error)));
@@ -112,6 +118,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     await _logoutUseCase();
+    // Clear user ID from crash reports on logout
+    await CrashReporter.setUserId(null);
     emit(const AuthUnauthenticated());
   }
 
@@ -125,6 +133,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         idToken: event.idToken,
         serverAuthCode: event.serverAuthCode,
       );
+      await CrashReporter.setUserId(user.id.toString());
       emit(AuthAuthenticated(user));
     } catch (error) {
       emit(AuthFailure(ApiErrorHandler.getMessage(error)));

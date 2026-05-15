@@ -49,7 +49,7 @@ class _AspirationDetailScreenState extends State<AspirationDetailScreen> {
             child: CustomScrollView(
               slivers: [
                 // ── Header (same style as Iuran) ──────────────────────
-                FeaturePageHeader(
+                const FeaturePageHeader(
                   title: 'Detail Aspirasi',
                   icon: Icons.chat_bubble_outline_rounded,
                   subtitle: 'Lihat perkembangan dan dukungan aspirasi',

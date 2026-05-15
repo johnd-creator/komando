@@ -54,9 +54,9 @@ class _IuranScreenState extends State<IuranScreen> {
             return RefreshIndicator(
               onRefresh: () async => _reload(),
               child: ListView(
-                children: [
-                  const SizedBox(height: 120),
-                  const EmptyState(
+                children: const [
+                  SizedBox(height: 120),
+                  EmptyState(
                     title: 'Profil anggota belum terhubung',
                     message:
                         'Akun ini belum memiliki profil anggota sehingga iuran belum dapat ditampilkan.',
@@ -70,9 +70,9 @@ class _IuranScreenState extends State<IuranScreen> {
             return RefreshIndicator(
               onRefresh: () async => _reload(),
               child: ListView(
-                children: [
-                  const SizedBox(height: 120),
-                  const EmptyState(
+                children: const [
+                  SizedBox(height: 120),
+                  EmptyState(
                     title: 'Belum ada riwayat iuran',
                     message: 'Data iuran Anda akan tampil di sini.',
                   ),

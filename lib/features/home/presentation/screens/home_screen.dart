@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -29,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     context.read<DashboardBloc>().add(const DashboardRequested());
-    _loadLatestNews();
+    unawaited(_loadLatestNews()); // initState cannot be async
   }
 
   void _showLainnya(BuildContext context) {
@@ -37,64 +40,68 @@ class _HomeScreenState extends State<HomeScreen> {
     final hasAdmin =
         authState is AuthAuthenticated && authState.user.hasAdminAccess;
 
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.feedback_outlined),
-              title: const Text('Feedback'),
-              onTap: () {
-                Navigator.pop(ctx);
-                context.push(AppRoutes.feedback);
-              },
-            ),
-            const ListTile(
-              leading: Icon(Icons.settings_outlined),
-              title: Text('Pengaturan'),
-              enabled: false,
-            ),
-            if (hasAdmin)
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               ListTile(
-                leading: const Icon(Icons.admin_panel_settings_outlined),
-                title: const Text('Admin Panel'),
+                leading: const Icon(Icons.feedback_outlined),
+                title: const Text('Feedback'),
                 onTap: () {
                   Navigator.pop(ctx);
-                  context.push(AppRoutes.admin);
+                  context.push(AppRoutes.feedback);
                 },
               ),
-          ],
+              const ListTile(
+                leading: Icon(Icons.settings_outlined),
+                title: Text('Pengaturan'),
+                enabled: false,
+              ),
+              if (hasAdmin)
+                ListTile(
+                  leading: const Icon(Icons.admin_panel_settings_outlined),
+                  title: const Text('Admin Panel'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    context.push(AppRoutes.admin);
+                  },
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _showBendahara(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.receipt_long_outlined),
-              title: const Text('Catat transaksi'),
-              onTap: () {
-                Navigator.pop(ctx);
-                context.push(AppRoutes.keuangan);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.fact_check_outlined),
-              title: const Text('Kelola iuran'),
-              onTap: () {
-                Navigator.pop(ctx);
-                context.push(AppRoutes.adminDues);
-              },
-            ),
-          ],
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.receipt_long_outlined),
+                title: const Text('Catat transaksi'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.push(AppRoutes.keuangan);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.fact_check_outlined),
+                title: const Text('Kelola iuran'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.push(AppRoutes.adminDues);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -140,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _openNewsItem(NewsModel item) async {
     if (item.link.isEmpty) {
-      context.push(AppRoutes.news);
+      unawaited(context.push(AppRoutes.news));
       return;
     }
 
@@ -173,10 +180,13 @@ class _HomeScreenState extends State<HomeScreen> {
           final dashboard = state is DashboardLoaded ? state.dashboard : null;
           final isLoading =
               state is DashboardLoading || state is DashboardInitial;
-          final authState = context.watch<AuthBloc>().state;
-          final showBendahara =
-              authState is AuthAuthenticated &&
-              authState.user.normalizedRoleName != 'anggota';
+          // Use select instead of watch to only rebuild when role changes,
+          // not on every AuthBloc state emission
+          final showBendahara = context.select<AuthBloc, bool>((bloc) {
+            final s = bloc.state;
+            return s is AuthAuthenticated &&
+                s.user.normalizedRoleName != 'anggota';
+          });
 
           return RefreshIndicator(
             onRefresh: _refresh,
@@ -959,12 +969,14 @@ class _LatestNewsTile extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: item.imageUrl.isNotEmpty
-                      ? Image.network(
-                          item.imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: item.imageUrl,
                           width: 96,
                           height: 74,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
+                          errorWidget: (context, url, error) =>
+                              _NewsImageFallback(colorScheme: colorScheme),
+                          placeholder: (context, url) =>
                               _NewsImageFallback(colorScheme: colorScheme),
                         )
                       : _NewsImageFallback(colorScheme: colorScheme),

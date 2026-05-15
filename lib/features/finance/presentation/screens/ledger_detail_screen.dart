@@ -268,7 +268,9 @@ class _DetailBody extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).whenComplete(
+      ctrl.dispose,
+    ); // Always dispose controller when dialog closes
   }
 
   void _confirmDelete(BuildContext context) {

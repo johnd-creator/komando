@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
+import '../logging/app_logger.dart';
 import '../security/token_storage.dart';
 
-/// Custom image provider that includes authentication headers
+/// Custom image provider that fetches images with Bearer auth headers.
+/// Uses Dio (already a project dependency) instead of package:http.
 class AuthenticatedImageProvider
     extends ImageProvider<AuthenticatedImageProvider> {
   const AuthenticatedImageProvider({
@@ -19,6 +21,15 @@ class AuthenticatedImageProvider
   final String url;
   final TokenStorage tokenStorage;
   final double scale;
+
+  // Shared Dio instance for image fetching — no auth interceptor needed here,
+  // we inject the token manually per request.
+  static final _dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+    ),
+  );
 
   @override
   Future<AuthenticatedImageProvider> obtainKey(
@@ -48,48 +59,45 @@ class AuthenticatedImageProvider
     ImageDecoderCallback decode,
   ) async {
     try {
-      debugPrint('[AuthenticatedImageProvider] Loading image: ${key.url}');
+      AppLogger.d('Loading authenticated image', tag: 'ImageProvider');
 
       final token = await tokenStorage.readAccessToken();
       final headers = <String, String>{'Accept': 'image/*'};
 
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
-        debugPrint('[AuthenticatedImageProvider] Using auth token');
       }
 
-      final response = await http.get(Uri.parse(key.url), headers: headers);
+      final response = await _dio.get<Uint8List>(
+        key.url,
+        options: Options(headers: headers, responseType: ResponseType.bytes),
+      );
 
-      if (response.statusCode != 200) {
-        debugPrint(
-          '[AuthenticatedImageProvider] Failed to load image: ${response.statusCode}',
-        );
+      final statusCode = response.statusCode ?? 0;
+      if (statusCode != 200) {
+        AppLogger.w('Image load failed: $statusCode', tag: 'ImageProvider');
         throw NetworkImageLoadException(
-          statusCode: response.statusCode,
+          statusCode: statusCode,
           uri: Uri.parse(key.url),
         );
       }
 
-      debugPrint('[AuthenticatedImageProvider] Image loaded successfully');
-      final bytes = response.bodyBytes;
-
-      if (bytes.isEmpty) {
+      final bytes = response.data;
+      if (bytes == null || bytes.isEmpty) {
         throw Exception('Image is empty');
       }
 
       final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
       return decode(buffer);
     } catch (e) {
-      debugPrint('[AuthenticatedImageProvider] Error loading image: $e');
+      AppLogger.e('Error loading image', error: e, tag: 'ImageProvider');
       rethrow;
     }
   }
 
   @override
   bool operator ==(Object other) {
-    if (other.runtimeType != runtimeType) {
-      return false;
-    }
+    if (other.runtimeType != runtimeType) return false;
     return other is AuthenticatedImageProvider &&
         other.url == url &&
         other.scale == scale;

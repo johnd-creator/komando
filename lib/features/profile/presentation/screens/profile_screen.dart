@@ -563,11 +563,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           child: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 44,
                 child: Icon(
                   Icons.logout_rounded,
-                  color: const Color(0xFFE63946),
+                  color: Color(0xFFE63946),
                   size: 31,
                 ),
               ),

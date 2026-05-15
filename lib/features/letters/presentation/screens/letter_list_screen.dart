@@ -184,15 +184,9 @@ class _LetterListScreenState extends State<LetterListScreen>
                                     ),
                                   );
                                 }
-                                return AnimatedOpacity(
-                                  duration: Duration(
-                                    milliseconds: 150 + (index * 30),
-                                  ),
-                                  opacity: 1.0,
-                                  child: _LetterCard(
-                                    letter: listState.items[index],
-                                    isLast: index == listState.items.length - 1,
-                                  ),
+                                return _LetterCard(
+                                  letter: listState.items[index],
+                                  isLast: index == listState.items.length - 1,
                                 );
                               },
                             ),
@@ -508,7 +502,7 @@ class _LetterTabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = const Color(0xFF096FDB);
+    const primary = Color(0xFF096FDB);
     final foreground = selected ? primary : const Color(0xFF536683);
 
     return SizedBox(

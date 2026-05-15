@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/utils/currency.dart';
 import '../../../../shared/presentation/widgets/empty_state.dart';
 import '../../../../shared/presentation/widgets/error_state.dart';
 import '../../../../shared/presentation/widgets/loading_state.dart';
@@ -835,17 +836,4 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-String _formatAmount(double amount) {
-  if (amount == amount.roundToDouble()) {
-    return amount.toInt().toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    );
-  }
-  return amount
-      .toStringAsFixed(0)
-      .replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-        (m) => '${m[1]}.',
-      );
-}
+String _formatAmount(double amount) => formatRupiah(amount, showPrefix: false);

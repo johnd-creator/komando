@@ -61,7 +61,13 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      body: BlocBuilder<LetterBloc, LetterState>(
+      body: BlocConsumer<LetterBloc, LetterState>(
+        listener: (context, state) {
+          // Trigger animation once when detail loads — not inside builder
+          if (state is LetterDetailLoaded) {
+            _animationController.forward();
+          }
+        },
         builder: (context, state) {
           if (state is LetterLoading || state is LetterInitial) {
             return const LoadingState(message: 'Memuat detail surat...');
@@ -75,14 +81,11 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
               _statusColors[letter.status] ?? const Color(0xFF6B7280);
           final statusLabel = _statusLabels[letter.status] ?? letter.status;
 
-          // Animate when data is loaded
-          _animationController.forward();
-
           return CustomScrollView(
             slivers: [
               // Gradient app bar with decorative elements
               SliverAppBar(
-                expandedHeight: 200,
+                expandedHeight: 140,
                 pinned: true,
                 backgroundColor: const Color(0xFF1565C0),
                 foregroundColor: Colors.white,
@@ -104,10 +107,10 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                         // Decorative circles
                         Positioned(
                           right: -30,
-                          top: 40,
+                          top: 24,
                           child: Container(
-                            width: 120,
-                            height: 120,
+                            width: 110,
+                            height: 110,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.white.withValues(alpha: 0.08),
@@ -116,7 +119,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                         ),
                         Positioned(
                           left: -20,
-                          bottom: 50,
+                          bottom: 24,
                           child: Container(
                             width: 80,
                             height: 80,
@@ -128,9 +131,9 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                         ),
                         SafeArea(
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 70, 20, 18),
+                            padding: const EdgeInsets.fromLTRB(20, 52, 20, 14),
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 FadeTransition(
@@ -163,7 +166,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 26,
+                                        fontSize: 24,
                                         fontWeight: FontWeight.w800,
                                         height: 1.08,
                                         letterSpacing: -0.5,
@@ -171,7 +174,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
                                 FadeTransition(
                                   opacity: CurvedAnimation(
                                     parent: _animationController,
@@ -416,16 +419,7 @@ class _LetterDetailScreenState extends State<LetterDetailScreen>
                                       color: Colors.grey.shade200,
                                     ),
                                   ),
-                                  child: SelectableText(
-                                    letter.body.isNotEmpty
-                                        ? letter.body
-                                        : '(Tidak ada isi surat)',
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      height: 1.7,
-                                      color: Color(0xFF333333),
-                                    ),
-                                  ),
+                                  child: _LetterBodyPreview(html: letter.body),
                                 ),
                               ],
                             ),
@@ -507,8 +501,8 @@ class _StatusProgressBar extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [const Color(0xFFFEF2F2), const Color(0xFFFEE2E2)],
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFEF2F2), Color(0xFFFEE2E2)],
           ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFFECACA)),
@@ -615,6 +609,246 @@ class _StatusProgressBar extends StatelessWidget {
         }),
       ),
     );
+  }
+}
+
+class _LetterBodyPreview extends StatefulWidget {
+  const _LetterBodyPreview({required this.html});
+
+  final String html;
+
+  @override
+  State<_LetterBodyPreview> createState() => _LetterBodyPreviewState();
+}
+
+class _LetterBodyPreviewState extends State<_LetterBodyPreview>
+    with SingleTickerProviderStateMixin {
+  static const _collapsedHeight = 220.0;
+  bool _expanded = false;
+
+  static const _baseStyle = TextStyle(
+    fontSize: 15,
+    height: 1.7,
+    color: Color(0xFF333333),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final trimmed = widget.html.trim();
+    if (trimmed.isEmpty) {
+      return const SelectableText('(Tidak ada isi surat)', style: _baseStyle);
+    }
+
+    final canExpand = _plainTextLength(trimmed) > 520;
+    final content = SelectableText.rich(
+      TextSpan(style: _baseStyle, children: _parseHtml(trimmed)),
+    );
+
+    if (!canExpand) return content;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: _expanded
+                ? const BoxConstraints()
+                : const BoxConstraints(maxHeight: _collapsedHeight),
+            child: Stack(
+              children: [
+                ClipRect(child: content),
+                if (!_expanded)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: 64,
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              const Color(0xFFFAFBFC).withValues(alpha: 0),
+                              const Color(0xFFFAFBFC),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => setState(() => _expanded = !_expanded),
+            icon: Icon(
+              _expanded
+                  ? Icons.keyboard_arrow_up_rounded
+                  : Icons.keyboard_arrow_down_rounded,
+            ),
+            label: Text(
+              _expanded ? 'Tampilkan lebih sedikit' : 'Baca selengkapnya',
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF1565C0),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  int _plainTextLength(String source) {
+    return _decodeHtml(
+      source.replaceAll(RegExp(r'<[^>]+>'), ' '),
+    ).replaceAll(RegExp(r'\s+'), ' ').trim().length;
+  }
+
+  List<InlineSpan> _parseHtml(String source) {
+    final spans = <InlineSpan>[];
+    final styleStack = <TextStyle>[_baseStyle];
+    final tagPattern = RegExp(r'<[^>]+>');
+    var cursor = 0;
+    var orderedIndex = 1;
+
+    void addText(String text) {
+      final normalized = _decodeHtml(
+        text,
+      ).replaceAll(RegExp(r'[ \t\r\f]+'), ' ');
+      if (normalized.isEmpty) return;
+      spans.add(TextSpan(text: normalized, style: styleStack.last));
+    }
+
+    void addBreak({int count = 1}) {
+      if (spans.isEmpty) return;
+      final currentText = spans.last is TextSpan
+          ? ((spans.last as TextSpan).text ?? '')
+          : '';
+      final breaks = '\n' * count;
+      if (currentText.endsWith(breaks)) return;
+      spans.add(TextSpan(text: breaks, style: styleStack.last));
+    }
+
+    for (final match in tagPattern.allMatches(source)) {
+      addText(source.substring(cursor, match.start));
+      final rawTag = match.group(0) ?? '';
+      final tag = rawTag
+          .replaceAll(RegExp(r'[<>/]'), '')
+          .trim()
+          .split(RegExp(r'\s+'))
+          .first
+          .toLowerCase();
+      final closing = rawTag.startsWith('</');
+
+      switch (tag) {
+        case 'br':
+          addBreak();
+        case 'p':
+        case 'div':
+          if (closing) {
+            addBreak(count: 2);
+          } else if (spans.isNotEmpty) {
+            addBreak();
+          }
+        case 'h1':
+        case 'h2':
+        case 'h3':
+        case 'h4':
+        case 'h5':
+        case 'h6':
+          if (closing) {
+            if (styleStack.length > 1) styleStack.removeLast();
+            addBreak(count: 2);
+          } else {
+            if (spans.isNotEmpty) addBreak();
+            styleStack.add(
+              styleStack.last.copyWith(
+                fontSize: tag == 'h1' ? 20 : 17,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF071A3A),
+              ),
+            );
+          }
+        case 'strong':
+        case 'b':
+          if (closing) {
+            if (styleStack.length > 1) styleStack.removeLast();
+          } else {
+            styleStack.add(
+              styleStack.last.copyWith(fontWeight: FontWeight.w800),
+            );
+          }
+        case 'em':
+        case 'i':
+          if (closing) {
+            if (styleStack.length > 1) styleStack.removeLast();
+          } else {
+            styleStack.add(
+              styleStack.last.copyWith(fontStyle: FontStyle.italic),
+            );
+          }
+        case 'u':
+          if (closing) {
+            if (styleStack.length > 1) styleStack.removeLast();
+          } else {
+            styleStack.add(
+              styleStack.last.copyWith(decoration: TextDecoration.underline),
+            );
+          }
+        case 'ul':
+          if (closing) addBreak();
+        case 'ol':
+          if (closing) {
+            orderedIndex = 1;
+            addBreak();
+          }
+        case 'li':
+          if (closing) {
+            addBreak();
+          } else {
+            final before = source.substring(0, match.start);
+            final inOrderedList =
+                before.lastIndexOf('<ol') > before.lastIndexOf('</ol>');
+            addBreak();
+            addText(inOrderedList ? '${orderedIndex++}. ' : '- ');
+          }
+      }
+
+      cursor = match.end;
+    }
+    addText(source.substring(cursor));
+
+    while (spans.isNotEmpty &&
+        spans.last is TextSpan &&
+        (((spans.last as TextSpan).text ?? '').trim().isEmpty)) {
+      spans.removeLast();
+    }
+
+    return spans.isEmpty
+        ? const [TextSpan(text: '(Tidak ada isi surat)')]
+        : spans;
+  }
+
+  String _decodeHtml(String value) {
+    return value
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&apos;', "'");
   }
 }
 

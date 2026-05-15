@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/presentation/widgets/error_state.dart';
 import '../../../../shared/presentation/widgets/loading_state.dart';
 import '../../data/models/announcement_model.dart';
@@ -32,7 +33,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.surface,
       body: BlocBuilder<AnnouncementBloc, AnnouncementState>(
         builder: (context, state) {
           if (state is AnnouncementLoading || state is AnnouncementInitial) {
@@ -46,11 +47,11 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
 
           return CustomScrollView(
             slivers: [
-              // App bar with gradient
+              // App bar with gradient and decorative circles
               SliverAppBar(
-                expandedHeight: 160,
+                expandedHeight: 180,
                 pinned: true,
-                backgroundColor: const Color(0xFF1565C0),
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
@@ -58,73 +59,120 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
+                        colors: [AppColors.primary, AppColors.primaryLight],
                       ),
                     ),
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                    child: Stack(
+                      children: [
+                        // Decorative circles for visual depth
+                        Positioned(
+                          right: -30,
+                          top: 40,
+                          child: Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.08),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: -20,
+                          bottom: 50,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.05),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 60,
+                          bottom: 20,
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.06),
+                            ),
+                          ),
+                        ),
+                        SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (announcement.isPinned) ...[
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.push_pin_rounded,
-                                          size: 12,
-                                          color: Colors.white,
+                                Row(
+                                  children: [
+                                    if (announcement.isPinned) ...[
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
                                         ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          'Dipin',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
                                           ),
                                         ),
-                                      ],
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.push_pin_rounded,
+                                              size: 12,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Dipin',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        announcement.unitName,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    announcement.unitName,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                   title: const Text(
@@ -169,27 +217,37 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1A1A2E),
+                                color: AppColors.textPrimary,
                                 height: 1.3,
                               ),
                             ),
-                            const SizedBox(height: 12),
-                            const Divider(height: 1),
-                            const SizedBox(height: 12),
-                            // Meta info
+                            const SizedBox(height: 16),
+                            Container(
+                              height: 1,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.grey.shade200,
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            // Meta info with enhanced rows
                             _MetaRow(
                               icon: Icons.person_outline_rounded,
                               label: 'Dari',
                               value: announcement.creatorName,
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
                             _MetaRow(
                               icon: Icons.business_outlined,
                               label: 'Unit',
                               value: announcement.unitName,
                             ),
                             if (announcement.createdAt.isNotEmpty) ...[
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               _MetaRow(
                                 icon: Icons.access_time_rounded,
                                 label: 'Tanggal',
@@ -220,31 +278,57 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Row(
-                              children: [
-                                Icon(
-                                  Icons.article_outlined,
-                                  size: 18,
-                                  color: Color(0xFF1565C0),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.primary.withValues(alpha: 0.1),
+                                    AppColors.primary.withValues(alpha: 0.05),
+                                  ],
                                 ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Isi Pengumuman',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1565C0),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.article_outlined,
+                                    size: 18,
+                                    color: AppColors.primary,
                                   ),
-                                ),
-                              ],
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Isi Pengumuman',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 12),
-                            Text(
-                              announcement.body,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                height: 1.6,
-                                color: Color(0xFF333333),
+                            const SizedBox(height: 16),
+                            // Document-like body container
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFAFBFC),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Text(
+                                announcement.body,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  height: 1.6,
+                                  color: Color(0xFF333333),
+                                ),
                               ),
                             ),
                           ],
@@ -276,7 +360,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                                   const Icon(
                                     Icons.attach_file_rounded,
                                     size: 18,
-                                    color: Color(0xFF1565C0),
+                                    color: AppColors.primary,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -284,7 +368,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF1565C0),
+                                      color: AppColors.primary,
                                     ),
                                   ),
                                 ],
@@ -300,7 +384,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Dismiss button
+                      // Dismiss button with red tint
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
@@ -311,8 +395,13 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                             Navigator.of(context).pop();
                           },
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey.shade600,
-                            side: BorderSide(color: Colors.grey.shade300),
+                            foregroundColor: AppColors.error,
+                            backgroundColor: AppColors.error.withValues(
+                              alpha: 0.04,
+                            ),
+                            side: BorderSide(
+                              color: AppColors.error.withValues(alpha: 0.3),
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -322,7 +411,10 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
                             Icons.visibility_off_outlined,
                             size: 18,
                           ),
-                          label: const Text('Sembunyikan Pengumuman'),
+                          label: const Text(
+                            'Sembunyikan Pengumuman',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -338,6 +430,8 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   }
 }
 
+// ─── Meta Row (enhanced with background container) ────────────────────────────
+
 class _MetaRow extends StatelessWidget {
   const _MetaRow({
     required this.icon,
@@ -351,33 +445,53 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 60,
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 13, color: Colors.grey),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFBFC),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 16, color: Colors.grey.shade600),
           ),
-        ),
-        const Text(': ', style: TextStyle(color: Colors.grey)),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1A1A2E),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 60,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-        ),
-      ],
+          const Text(': ', style: TextStyle(color: Colors.grey)),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
+
+// ─── Attachment Tile (enhanced with press effect and prominent download icon) ─
 
 class _AttachmentTile extends StatelessWidget {
   const _AttachmentTile({required this.attachment});
@@ -403,50 +517,77 @@ class _AttachmentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFF5F7FA),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1565C0).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              _iconForMime(attachment.mime),
-              color: const Color(0xFF1565C0),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            // Attachment tap action (download)
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
-                Text(
-                  attachment.originalName,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A2E),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  child: Icon(
+                    _iconForMime(attachment.mime),
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
-                Text(
-                  _formatSize(attachment.size),
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        attachment.originalName,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        _formatSize(attachment.size),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Prominent download icon with circular background
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.download_rounded,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.download_outlined, size: 20, color: Colors.grey),
-        ],
+        ),
       ),
     );
   }

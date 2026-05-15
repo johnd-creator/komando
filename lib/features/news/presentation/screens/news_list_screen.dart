@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -159,12 +160,23 @@ class _FeaturedNewsCard extends StatelessWidget {
             if (item.imageUrl.isNotEmpty)
               Stack(
                 children: [
-                  Image.network(
-                    item.imageUrl,
+                  CachedNetworkImage(
+                    imageUrl: item.imageUrl,
                     height: 200,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
+                    placeholder: (_, _) => Container(
+                      height: 200,
+                      color: const Color(0xFFE8EEF7),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (_, _, _) => Container(
                       height: 200,
                       color: const Color(0xFFE8EEF7),
                       child: const Center(
@@ -351,12 +363,13 @@ class _NewsListCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: item.imageUrl.isNotEmpty
-                      ? Image.network(
-                          item.imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: item.imageUrl,
                           width: 80,
                           height: 80,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _placeholder(),
+                          errorWidget: (_, _, _) => _placeholder(),
+                          placeholder: (_, _) => _placeholder(),
                         )
                       : _placeholder(),
                 ),

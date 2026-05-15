@@ -104,7 +104,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           const SizedBox(height: 22),
                         ],
                         if (readItems.isNotEmpty) ...[
-                          _SectionHeader(title: 'Sebelumnya'),
+                          const _SectionHeader(title: 'Sebelumnya'),
                           const SizedBox(height: 12),
                           _NotificationList(
                             items: readItems,
@@ -501,7 +501,7 @@ class _FilterChipButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = const Color(0xFF0967D8);
+    const primary = Color(0xFF0967D8);
 
     return Material(
       color: Colors.transparent,

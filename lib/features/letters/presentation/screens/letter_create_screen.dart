@@ -236,7 +236,7 @@ class _LetterCreateScreenState extends State<LetterCreateScreen>
                                       border: OutlineInputBorder(),
                                       prefixIcon: Icon(Icons.category_outlined),
                                     ),
-                                    items: [],
+                                    items: const [],
                                     onChanged: null,
                                   ),
                           ),

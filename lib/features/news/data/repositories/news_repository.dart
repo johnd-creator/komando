@@ -10,11 +10,25 @@ class NewsRepository {
   final AppCache _cache;
 
   Future<List<NewsModel>> getCachedPosts() async {
+    // Return empty if cache is stale (>15 min)
+    if (await _cache.isStale(
+      AppCache.newsFirstPageKey,
+      const Duration(minutes: 15),
+    )) {
+      return const [];
+    }
     final cached = await _cache.readJson(AppCache.newsFirstPageKey);
     return _readCachedItems(cached);
   }
 
   Future<List<NewsModel>> getCachedLatestPosts() async {
+    // Return empty if cache is stale (>15 min)
+    if (await _cache.isStale(
+      AppCache.newsLatestKey,
+      const Duration(minutes: 15),
+    )) {
+      return const [];
+    }
     final cached = await _cache.readJson(AppCache.newsLatestKey);
     return _readCachedItems(cached);
   }

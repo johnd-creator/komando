@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import '../../../core/api/api_error_handler.dart';
+import '../../../core/logging/app_logger.dart';
 import '../repository/dues_repository.dart';
 import 'dues_admin_event.dart';
 import 'dues_admin_state.dart';
@@ -108,7 +108,7 @@ class DuesAdminBloc extends Bloc<DuesAdminEvent, DuesAdminState> {
     bool append = false,
   }) async {
     try {
-      debugPrint('[DuesAdminBloc] _fetchData page=$page filters=$filters');
+      AppLogger.d('_fetchData page=$page', tag: 'DuesAdminBloc');
 
       final data = await repository
           .getAdminDues(
@@ -123,7 +123,7 @@ class DuesAdminBloc extends Bloc<DuesAdminEvent, DuesAdminState> {
 
       final payments = List<DuesPayment>.from(data['payments'] as List);
 
-      debugPrint('[DuesAdminBloc] Received ${payments.length} payments');
+      AppLogger.d('Received ${payments.length} payments', tag: 'DuesAdminBloc');
 
       DuesAdminSummary? summary;
       try {
@@ -134,7 +134,7 @@ class DuesAdminBloc extends Bloc<DuesAdminEvent, DuesAdminState> {
             )
             .timeout(const Duration(seconds: 12));
       } catch (summaryErr) {
-        debugPrint('[DuesAdminBloc] Summary fetch failed: $summaryErr');
+        AppLogger.w('Summary fetch failed: $summaryErr', tag: 'DuesAdminBloc');
         summary =
             state.summary ??
             const DuesAdminSummary(
@@ -145,9 +145,11 @@ class DuesAdminBloc extends Bloc<DuesAdminEvent, DuesAdminState> {
             );
       }
 
-      final defaultAmount =
-          await repository.getDefaultDuesAmount() ??
-          DuesRepository.fallbackDuesAmount;
+      // Cache defaultAmount — only fetch from API if not yet loaded in state
+      final defaultAmount = state.defaultAmount > 0
+          ? state.defaultAmount
+          : (await repository.getDefaultDuesAmount() ??
+                DuesRepository.fallbackDuesAmount);
 
       final newPayments = append
           ? <DuesPayment>[...state.payments, ...payments]
@@ -166,8 +168,12 @@ class DuesAdminBloc extends Bloc<DuesAdminEvent, DuesAdminState> {
         ),
       );
     } catch (e, stackTrace) {
-      debugPrint('[DuesAdminBloc] _fetchData ERROR: $e');
-      debugPrint('[DuesAdminBloc] Stack: $stackTrace');
+      AppLogger.e(
+        '_fetchData failed',
+        error: e,
+        stack: stackTrace,
+        tag: 'DuesAdminBloc',
+      );
       final message = e is DioException
           ? ApiErrorHandler.getMessage(e)
           : 'Data iuran gagal dimuat: ${e.runtimeType}';

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/utils/currency.dart';
+import '../../../core/utils/date_period.dart';
 import '../../auth/presentation/bloc/auth_bloc.dart';
 import '../../auth/presentation/bloc/auth_state.dart';
 import '../bloc/dues_admin_bloc.dart';
@@ -26,22 +28,6 @@ class _DuesAdminListScreenState extends State<DuesAdminListScreen> {
   Timer? _searchDebounce;
   late DateTime _selectedMonth;
   bool _canChecklist = false;
-
-  static const _monthNames = [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -113,7 +99,7 @@ class _DuesAdminListScreenState extends State<DuesAdminListScreen> {
 
   void _onSearchChanged(String value) {
     final bloc = context.read<DuesAdminBloc>();
-    setState(() {});
+    // Removed empty setState(() {}) — TextField rebuilds itself via controller
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 350), () {
       if (!mounted) return;
@@ -151,8 +137,7 @@ class _DuesAdminListScreenState extends State<DuesAdminListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentPeriodLabel =
-        '${_monthNames[_selectedMonth.month - 1]} ${_selectedMonth.year}';
+    final currentPeriodLabel = formatPeriodLong(_selectedMonth);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F7FC),
@@ -290,12 +275,8 @@ class _DuesAdminListScreenState extends State<DuesAdminListScreen> {
     }
   }
 
-  String _formatAmount(double amount) {
-    return amount.toInt().toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (m) => '${m[1]}.',
-    );
-  }
+  String _formatAmount(double amount) =>
+      formatRupiah(amount, showPrefix: false);
 }
 
 class _DuesAdminHeader extends StatelessWidget {
