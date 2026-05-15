@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../../core/api/json_read.dart';
 
 class LetterModel {
@@ -39,7 +41,7 @@ class LetterModel {
         'number',
       ], fallback: '-'),
       subject: readString(json, const ['subject', 'title']),
-      body: readString(json, const ['body'], fallback: ''),
+      body: _readLetterBody(json),
       status: readString(json, const ['status'], fallback: 'draft'),
       categoryName: readString(category, const ['name'], fallback: 'Umum'),
       creatorName: readString(creator, const ['name'], fallback: 'Anggota'),
@@ -47,6 +49,71 @@ class LetterModel {
       createdAt: readString(json, const ['created_at'], fallback: ''),
       hasAttachments: readList(json, 'attachments').isNotEmpty,
     );
+  }
+
+  static String _readLetterBody(Map<String, dynamic> json) {
+    for (final key in const [
+      'body',
+      'content',
+      'letter_body',
+      'isi_surat',
+      'message',
+      'description',
+      'raw_body',
+      'rendered_body',
+      'rendered_content',
+      'html',
+      'html_content',
+    ]) {
+      final value = json[key];
+      if (value is Map || value is List) {
+        return const JsonEncoder.withIndent('  ').convert(value);
+      }
+    }
+
+    final directBody = readString(json, const [
+      'body',
+      'content',
+      'letter_body',
+      'isi_surat',
+      'message',
+      'description',
+      'raw_body',
+      'rendered_body',
+      'rendered_content',
+      'html',
+      'html_content',
+    ], fallback: '');
+    if (directBody.isNotEmpty) return directBody;
+
+    for (final key in const ['template_data', 'data', 'payload', 'meta']) {
+      final nested = readMap(json, key);
+      if (nested.isEmpty) continue;
+      for (final nestedKey in const [
+        'body',
+        'content',
+        'letter_body',
+        'isi_surat',
+        'message',
+        'description',
+      ]) {
+        final value = nested[nestedKey];
+        if (value is Map || value is List) {
+          return const JsonEncoder.withIndent('  ').convert(value);
+        }
+      }
+      final nestedBody = readString(nested, const [
+        'body',
+        'content',
+        'letter_body',
+        'isi_surat',
+        'message',
+        'description',
+      ], fallback: '');
+      if (nestedBody.isNotEmpty) return nestedBody;
+    }
+
+    return '';
   }
 }
 

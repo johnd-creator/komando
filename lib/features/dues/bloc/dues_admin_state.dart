@@ -13,6 +13,7 @@ class DuesAdminState extends Equatable {
   final int totalPages;
   final bool hasMore;
   final bool canChecklist;
+  final double defaultAmount;
   final String? errorMessage;
 
   const DuesAdminState({
@@ -24,6 +25,7 @@ class DuesAdminState extends Equatable {
     this.totalPages = 1,
     this.hasMore = false,
     this.canChecklist = false,
+    this.defaultAmount = 50000,
     this.errorMessage,
   });
 
@@ -36,6 +38,7 @@ class DuesAdminState extends Equatable {
     int? totalPages,
     bool? hasMore,
     bool? canChecklist,
+    double? defaultAmount,
     String? errorMessage,
   }) {
     return DuesAdminState(
@@ -47,20 +50,22 @@ class DuesAdminState extends Equatable {
       totalPages: totalPages ?? this.totalPages,
       hasMore: hasMore ?? this.hasMore,
       canChecklist: canChecklist ?? this.canChecklist,
+      defaultAmount: defaultAmount ?? this.defaultAmount,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
   @override
   List<Object?> get props => [
-        status,
-        payments,
-        summary,
-        filters,
-        currentPage,
-        totalPages,
-        hasMore,
-        canChecklist,
-        errorMessage,
-      ];
+    status,
+    payments,
+    summary,
+    filters,
+    currentPage,
+    totalPages,
+    hasMore,
+    canChecklist,
+    defaultAmount,
+    errorMessage,
+  ];
 }

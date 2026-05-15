@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/presentation/widgets/error_state.dart';
 import '../../../../shared/presentation/widgets/loading_state.dart';
-import '../../../../shared/presentation/widgets/section_header.dart';
 import '../../data/models/letter_model.dart';
 import '../bloc/letter_bloc.dart';
 import '../bloc/letter_event.dart';
@@ -33,14 +32,19 @@ class LetterListScreen extends StatefulWidget {
 }
 
 class _LetterListScreenState extends State<LetterListScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tabController;
+  late AnimationController _fadeController;
   late String _box;
   final Map<String, LetterListLoaded> _loadedBoxes = {};
 
   @override
   void initState() {
     super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
     _box = widget.initialBox;
     final initialIndex = _boxes.indexOf(_box).clamp(0, 2);
     _tabController = TabController(
@@ -59,11 +63,13 @@ class _LetterListScreenState extends State<LetterListScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
   void _reload() {
     context.read<LetterBloc>().add(LettersFetched(box: _box, refresh: true));
+    _fadeController.forward(from: 0);
   }
 
   void _loadMore() {
@@ -79,6 +85,7 @@ class _LetterListScreenState extends State<LetterListScreen>
     if (_box == box) return;
     setState(() => _box = box);
     context.read<LetterBloc>().add(LetterBoxChanged(box));
+    _fadeController.forward(from: 0);
   }
 
   @override
@@ -118,7 +125,6 @@ class _LetterListScreenState extends State<LetterListScreen>
                 context.go(AppRoutes.home);
               }
             },
-            onCreate: _createLetter,
             onSelectBox: (box) {
               final index = _boxes.indexOf(box);
               if (index >= 0 && _tabController.index != index) {
@@ -130,40 +136,66 @@ class _LetterListScreenState extends State<LetterListScreen>
               onRefresh: () async => _reload(),
               child: isTabLoading
                   ? const _LetterContentLoading()
-                  : (listState?.items.isEmpty ?? true)
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
-                      children: [
-                        _LetterEmptyCard(
-                          title: _emptyTitle,
-                          message: _emptyMessage,
-                          onCreate: _createLetter,
-                        ),
-                      ],
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 96),
-                      itemCount:
-                          listState!.items.length + (listState.hasMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index >= listState.items.length) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            child: Center(
-                              child: TextButton.icon(
-                                onPressed: _loadMore,
-                                icon: const Icon(Icons.expand_more_rounded),
-                                label: const Text('Muat lagi'),
+                  : FadeTransition(
+                      opacity: CurvedAnimation(
+                        parent: _fadeController,
+                        curve: Curves.easeOut,
+                      ),
+                      child: listState == null || listState.items.isEmpty
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                24,
+                                20,
+                                22,
                               ),
+                              children: [
+                                _LetterEmptyCard(
+                                  box: _box,
+                                  onCreate: _createLetter,
+                                ),
+                              ],
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                20,
+                                16,
+                                96,
+                              ),
+                              itemCount:
+                                  listState.items.length +
+                                  (listState.hasMore ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index >= listState.items.length) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    child: Center(
+                                      child: TextButton.icon(
+                                        onPressed: _loadMore,
+                                        icon: const Icon(
+                                          Icons.expand_more_rounded,
+                                        ),
+                                        label: const Text('Muat lagi'),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return AnimatedOpacity(
+                                  duration: Duration(
+                                    milliseconds: 150 + (index * 30),
+                                  ),
+                                  opacity: 1.0,
+                                  child: _LetterCard(
+                                    letter: listState.items[index],
+                                    isLast: index == listState.items.length - 1,
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        }
-                        return _LetterCard(
-                          letter: listState.items[index],
-                          isLast: index == listState.items.length - 1,
-                        );
-                      },
                     ),
             ),
           );
@@ -171,78 +203,41 @@ class _LetterListScreenState extends State<LetterListScreen>
       ),
     );
   }
-
-  String get _emptyTitle => switch (_box) {
-    'inbox' => 'Belum ada surat masuk',
-    'outbox' => 'Belum ada surat keluar',
-    'approvals' => 'Belum ada surat perlu approval',
-    _ => 'Belum ada surat',
-  };
-
-  String get _emptyMessage => switch (_box) {
-    'inbox' => 'Surat yang dikirim kepada Anda akan tampil di sini.',
-    'outbox' => 'Gunakan tombol Buat Surat untuk membuat surat baru.',
-    'approvals' => 'Surat yang perlu Anda setujui akan tampil di sini.',
-    _ => 'Belum ada surat.',
-  };
 }
 
 class _LetterScaffold extends StatelessWidget {
   const _LetterScaffold({
     required this.selectedBox,
     required this.onBack,
-    required this.onCreate,
     required this.onSelectBox,
     required this.child,
   });
 
   final String selectedBox;
   final VoidCallback onBack;
-  final VoidCallback onCreate;
   final ValueChanged<String> onSelectBox;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final safeTop = MediaQuery.paddingOf(context).top;
-    final panelTop = safeTop + 110;
+    final panelTop = safeTop + 120; // Reduced from 140
 
     return Stack(
       children: [
         const Positioned.fill(child: ColoredBox(color: Color(0xFFF5F7FA))),
+        // Enhanced Header with gradient and decorations
         Positioned(
           top: 0,
           left: 0,
           right: 0,
           height: panelTop + 36,
-          child: const _LetterHeader(),
-        ),
-        Positioned(
-          top: safeTop + 20,
-          left: 12,
-          right: 24,
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: onBack,
-                icon: const Icon(Icons.arrow_back_rounded),
-                color: Colors.white,
-                iconSize: 26,
-                tooltip: 'Kembali',
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Surat',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 24,
-                  height: 1,
-                ),
-              ),
-            ],
+          child: _EnhancedLetterHeader(
+            selectedBox: selectedBox,
+            onBack: onBack,
           ),
         ),
+        // Content panel
         Positioned(
           top: panelTop,
           left: 0,
@@ -267,19 +262,209 @@ class _LetterScaffold extends StatelessWidget {
   }
 }
 
-class _LetterHeader extends StatelessWidget {
-  const _LetterHeader();
+class _EnhancedLetterHeader extends StatelessWidget {
+  const _EnhancedLetterHeader({
+    required this.selectedBox,
+    required this.onBack,
+  });
+
+  final String selectedBox;
+  final VoidCallback onBack;
+
+  String get _headerSubtitle => switch (selectedBox) {
+    'inbox' => 'Surat masuk yang ditujukan untuk Anda',
+    'outbox' => 'Daftar surat yang telah Anda buat',
+    'approvals' => 'Surat yang memerlukan persetujuan Anda',
+    _ => 'Kelola surat organisasi',
+  };
+
+  IconData get _headerIcon => switch (selectedBox) {
+    'inbox' => Icons.inbox_rounded,
+    'outbox' => Icons.outbox_rounded,
+    'approvals' => Icons.approval_rounded,
+    _ => Icons.mail_rounded,
+  };
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF096FDB), Color(0xFF0062CF), Color(0xFF0757B7)],
+    return Stack(
+      children: [
+        // Gradient background
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1565C0), Color(0xFF1976D2), Color(0xFF1E88E5)],
+            ),
+          ),
         ),
-      ),
+        // Decorative circles
+        Positioned(
+          right: -30,
+          top: 20,
+          child: Container(
+            width: 150,
+            height: 150,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.08),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 40,
+          bottom: 60,
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.05),
+            ),
+          ),
+        ),
+        Positioned(
+          left: -20,
+          bottom: 30,
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.06),
+            ),
+          ),
+        ),
+        // Content
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              8,
+              8,
+              20,
+              16,
+            ), // Reduced top and bottom padding
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Back button and title row
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: onBack,
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      color: Colors.white,
+                      iconSize: 24, // Reduced from 26
+                      tooltip: 'Kembali',
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'Surat',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20, // Reduced from 24
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const Spacer(),
+                    // Action button
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () {},
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.search_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Cari',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12), // Reduced from Spacer()
+                // Subtitle with icon
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Icon(_headerIcon, color: Colors.white, size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _boxLabels[selectedBox] ?? 'Surat',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 17, // Reduced from 18
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 3), // Reduced from 4
+                            Text(
+                              _headerSubtitle,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontSize: 12, // Reduced from 13
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -401,87 +586,201 @@ class _LetterTabButton extends StatelessWidget {
 }
 
 class _LetterEmptyCard extends StatelessWidget {
-  const _LetterEmptyCard({
-    required this.title,
-    required this.message,
-    required this.onCreate,
-  });
+  const _LetterEmptyCard({required this.box, required this.onCreate});
 
-  final String title;
-  final String message;
+  final String box;
   final VoidCallback onCreate;
+
+  // Per-box config
+  static const _titles = {
+    'inbox': 'Kotak Masuk Kosong',
+    'outbox': 'Belum Ada Surat Keluar',
+    'approvals': 'Tidak Ada Perlu Disetujui',
+  };
+
+  static const _messages = {
+    'inbox':
+        'Anda belum menerima surat apapun.\nSurat yang masuk akan tampil di sini.',
+    'outbox':
+        'Anda belum pernah membuat surat.\nMulai buat surat pertama Anda sekarang.',
+    'approvals':
+        'Tidak ada surat yang menunggu\npersetujuan dari Anda saat ini.',
+  };
+
+  static const _tips = {
+    'inbox': 'Surat masuk dikirim oleh pengurus atau anggota lain kepada Anda.',
+    'outbox':
+        'Buat surat baru dan ajukan untuk dikirim ke penerima yang dituju.',
+    'approvals':
+        'Surat yang memerlukan tanda tangan atau persetujuan Anda akan muncul di sini.',
+  };
+
+  static const _tipIcons = {
+    'inbox': Icons.info_outline_rounded,
+    'outbox': Icons.edit_note_rounded,
+    'approvals': Icons.how_to_reg_outlined,
+  };
+
+  static const _tipColors = {
+    'inbox': Color(0xFF3B82F6),
+    'outbox': Color(0xFF8B5CF6),
+    'approvals': Color(0xFF059669),
+  };
+
+  static const _illustrationIcons = {
+    'inbox': Icons.inbox_rounded,
+    'outbox': Icons.outbox_rounded,
+    'approvals': Icons.approval_rounded,
+  };
+
+  bool get _showCreateButton => box == 'inbox' || box == 'outbox';
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.sizeOf(context).height;
+    final title = _titles[box] ?? 'Belum ada surat';
+    final message = _messages[box] ?? 'Belum ada data.';
+    final tip = _tips[box] ?? '';
+    final tipIcon = _tipIcons[box] ?? Icons.info_outline_rounded;
+    final tipColor = _tipColors[box] ?? const Color(0xFF3B82F6);
+    final illustrationIcon =
+        _illustrationIcons[box] ?? Icons.mail_outline_rounded;
 
     return Container(
-      constraints: BoxConstraints(minHeight: (height * 0.58).clamp(430, 560)),
-      padding: const EdgeInsets.fromLTRB(20, 34, 20, 24),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE1E8F2)),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF27446F).withValues(alpha: 0.06),
-            blurRadius: 18,
+            blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Spacer(),
-          const _LetterEmptyIllustration(),
+          // Illustration
+          _LetterEmptyIllustration(icon: illustrationIcon, color: tipColor),
           const SizedBox(height: 24),
+
+          // Title
           Text(
             title,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: const Color(0xFF20222A),
+            style: const TextStyle(
+              color: Color(0xFF1A365D),
               fontWeight: FontWeight.w800,
-              fontSize: 21,
+              fontSize: 18,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 12),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 290),
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: const Color(0xFF536683),
-                fontWeight: FontWeight.w500,
-                fontSize: 15,
-                height: 1.45,
+          const SizedBox(height: 10),
+
+          // Message
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 22),
+
+          // Info card — specific per tab
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: tipColor.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: tipColor.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: tipColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(tipIcon, color: tipColor, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    tip,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: tipColor.withValues(alpha: 0.9),
+                      height: 1.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Create button (only for inbox & outbox)
+          if (_showCreateButton) ...[
+            const SizedBox(height: 22),
+            SizedBox(
+              width: double.infinity,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1565C0).withValues(alpha: 0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: onCreate,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Buat Surat Baru',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
-          const Spacer(flex: 2),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.icon(
-              onPressed: onCreate,
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF096FDB),
-                foregroundColor: Colors.white,
-                elevation: 9,
-                shadowColor: const Color(0xFF096FDB).withValues(alpha: 0.32),
-                minimumSize: const Size(164, 56),
-                padding: const EdgeInsets.symmetric(horizontal: 22),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
-              ),
-              icon: const Icon(Icons.edit_rounded, size: 24),
-              label: const Text('Buat Surat'),
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -509,101 +808,135 @@ class _LetterContentLoading extends StatelessWidget {
 }
 
 class _LetterEmptyIllustration extends StatelessWidget {
-  const _LetterEmptyIllustration();
+  const _LetterEmptyIllustration({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 190,
-      height: 138,
+      width: 180,
+      height: 150,
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // Background circle
           Container(
-            width: 136,
-            height: 136,
-            decoration: const BoxDecoration(
+            width: 130,
+            height: 130,
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFFEAF3FF),
-            ),
-          ),
-          Positioned(
-            bottom: 24,
-            child: Container(
-              width: 98,
-              height: 52,
-              decoration: BoxDecoration(
-                color: const Color(0xFFBFD8FB),
-                borderRadius: BorderRadius.circular(11),
-              ),
-              child: const Icon(
-                Icons.inbox_rounded,
-                color: Color(0xFF7DAAEF),
-                size: 52,
+              gradient: RadialGradient(
+                colors: [
+                  color.withValues(alpha: 0.12),
+                  color.withValues(alpha: 0.04),
+                ],
               ),
             ),
           ),
+          // Main icon container
           Positioned(
-            top: 48,
+            bottom: 22,
             child: Container(
-              width: 60,
-              height: 64,
+              width: 90,
+              height: 56,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(8),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [color.withValues(alpha: 0.8), color],
+                ),
+                borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF7DAAEF).withValues(alpha: 0.14),
-                    blurRadius: 12,
+                    color: color.withValues(alpha: 0.3),
+                    blurRadius: 16,
                     offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: Colors.white, size: 32),
+            ),
+          ),
+          // Floating document card
+          Positioned(
+            top: 28,
+            child: Container(
+              width: 64,
+              height: 70,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.15),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  for (final width in const [42.0, 50.0, 34.0]) ...[
+                  for (final w in [36.0, 46.0, 38.0, 28.0]) ...[
                     Container(
-                      width: width,
-                      height: 7,
+                      width: w,
+                      height: 5,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD7E6FA),
-                        borderRadius: BorderRadius.circular(99),
+                        color: color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 5),
                   ],
                 ],
               ),
             ),
           ),
-          const Positioned(
-            top: 28,
-            right: 22,
-            child: Icon(
-              Icons.near_me_rounded,
-              color: Color(0xFF9FC2F5),
-              size: 44,
+          // Decorative dots
+          Positioned(
+            top: 38,
+            left: 28,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.2),
+              ),
             ),
           ),
-          const Positioned(
-            top: 52,
-            left: 42,
-            child: Icon(
-              Icons.circle_outlined,
-              color: Color(0xFF9FC2F5),
-              size: 9,
+          Positioned(
+            bottom: 62,
+            right: 24,
+            child: Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.2),
+              ),
             ),
           ),
-          const Positioned(
-            bottom: 58,
-            right: 36,
-            child: Icon(Icons.auto_awesome, color: Color(0xFF9FC2F5), size: 20),
+          // Sparkles
+          Positioned(
+            top: 16,
+            right: 28,
+            child: Icon(
+              Icons.auto_awesome,
+              color: color.withValues(alpha: 0.4),
+              size: 16,
+            ),
           ),
-          const Positioned(
-            bottom: 74,
-            left: 24,
-            child: Icon(Icons.auto_awesome, color: Color(0xFF9FC2F5), size: 16),
+          Positioned(
+            bottom: 22,
+            left: 18,
+            child: Icon(
+              Icons.auto_awesome,
+              color: color.withValues(alpha: 0.3),
+              size: 12,
+            ),
           ),
         ],
       ),
@@ -618,11 +951,11 @@ class _LetterCard extends StatelessWidget {
   final bool isLast;
 
   static const _statusColors = {
-    'draft': Colors.grey,
-    'submitted': Colors.orange,
-    'approved': Colors.blue,
-    'sent': Colors.green,
-    'rejected': Colors.red,
+    'draft': Color(0xFF6B7280),
+    'submitted': Color(0xFFF97316),
+    'approved': Color(0xFF3B82F6),
+    'sent': Color(0xFF22C55E),
+    'rejected': Color(0xFFEF4444),
   };
 
   static const _statusLabels = {
@@ -643,81 +976,107 @@ class _LetterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _statusColors[letter.status] ?? Colors.grey;
+    final color = _statusColors[letter.status] ?? const Color(0xFF6B7280);
     final label = _statusLabels[letter.status] ?? letter.status;
     final icon = _statusIcons[letter.status] ?? Icons.mail_outline_rounded;
 
     return Container(
-      margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
+      margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: color.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           onTap: () => context.push(AppRoutes.letterDetail(letter.id)),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Status icon circle
+                // Status icon circle with gradient
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        color.withValues(alpha: 0.2),
+                        color.withValues(alpha: 0.1),
+                      ],
+                    ),
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: color.withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
                   ),
-                  child: Icon(icon, color: color, size: 22),
+                  child: Icon(icon, color: color, size: 24),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 // Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Text(
                               letter.subject,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
-                                fontSize: 14,
+                                fontSize: 15,
                                 color: Color(0xFF1A1A2E),
+                                letterSpacing: -0.3,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          StatusChip(label: label, color: color),
+                          _EnhancedStatusChip(label: label, color: color),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2,
+                              horizontal: 10,
+                              vertical: 5,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF1565C0,
-                              ).withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(4),
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(
+                                    0xFF1565C0,
+                                  ).withValues(alpha: 0.1),
+                                  const Color(
+                                    0xFF1565C0,
+                                  ).withValues(alpha: 0.05),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFF1565C0,
+                                ).withValues(alpha: 0.2),
+                              ),
                             ),
                             child: Text(
                               letter.categoryName,
@@ -729,36 +1088,55 @@ class _LetterCard extends StatelessWidget {
                             ),
                           ),
                           if (letter.hasAttachments) ...[
-                            const SizedBox(width: 6),
-                            const Icon(
-                              Icons.attach_file_rounded,
-                              size: 14,
-                              color: Colors.grey,
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.attach_file_rounded,
+                                size: 14,
+                                color: Colors.grey.shade600,
+                              ),
                             ),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.person_outline,
-                            size: 13,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              '${letter.creatorName} · ${letter.createdAt}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.person_outline_rounded,
+                              size: 14,
+                              color: Colors.grey.shade500,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                '${letter.creatorName} · ${letter.createdAt}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -766,6 +1144,40 @@ class _LetterCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// Enhanced status chip with gradient
+class _EnhancedStatusChip extends StatelessWidget {
+  const _EnhancedStatusChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.15),
+            color.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
         ),
       ),
     );

@@ -267,7 +267,7 @@ class _DuesAdminListScreenState extends State<DuesAdminListScreen> {
       context: context,
       builder: (context) => DuesMassPayDialog(
         count: _selectedMemberIds.length,
-        defaultAmount: 30000,
+        defaultAmount: duesAdminBloc.state.defaultAmount,
       ),
     );
 

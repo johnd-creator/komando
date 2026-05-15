@@ -145,6 +145,10 @@ class DuesAdminBloc extends Bloc<DuesAdminEvent, DuesAdminState> {
             );
       }
 
+      final defaultAmount =
+          await repository.getDefaultDuesAmount() ??
+          DuesRepository.fallbackDuesAmount;
+
       final newPayments = append
           ? <DuesPayment>[...state.payments, ...payments]
           : payments;
@@ -157,6 +161,7 @@ class DuesAdminBloc extends Bloc<DuesAdminEvent, DuesAdminState> {
           currentPage: data['currentPage'] as int,
           totalPages: data['totalPages'] as int,
           hasMore: data['hasMore'] as bool,
+          defaultAmount: defaultAmount,
           errorMessage: null,
         ),
       );

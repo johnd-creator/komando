@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/api/api_error_handler.dart';
+import '../../data/models/admin_model.dart';
 import '../../data/repositories/admin_repository.dart';
 import 'admin_event.dart';
 import 'admin_state.dart';
@@ -32,13 +33,30 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     AdminMembersFetched event,
     Emitter<AdminState> emit,
   ) async {
-    emit(const AdminLoading(message: 'Memuat data anggota...'));
+    final previous = state;
+    final append = event.page > 1 && previous is AdminMembersLoaded;
+    if (!append) {
+      emit(const AdminLoading(message: 'Memuat data anggota...'));
+    }
     try {
       final model = await _repository.getMembers(
         search: event.search,
         page: event.page,
       );
-      emit(AdminMembersLoaded(page: model));
+      if (append) {
+        emit(
+          AdminMembersLoaded(
+            page: AdminMemberPageModel(
+              items: [...previous.page.items, ...model.items],
+              currentPage: model.currentPage,
+              lastPage: model.lastPage,
+              total: model.total,
+            ),
+          ),
+        );
+      } else {
+        emit(AdminMembersLoaded(page: model));
+      }
     } catch (e) {
       emit(AdminFailure(ApiErrorHandler.getMessage(e)));
     }

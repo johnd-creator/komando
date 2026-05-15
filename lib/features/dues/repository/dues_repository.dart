@@ -12,22 +12,75 @@ class DuesRepository {
 
   DuesRepository(this._dio);
 
+  static const double fallbackDuesAmount = 50000;
+
   Future<Map<String, dynamic>> getMyDues() async {
     final response = await _dio.get<Map<String, dynamic>>('/dues');
     final root = response.data ?? <String, dynamic>{};
     final data = _readDataMap(root);
     final payments = _readDataList(root, fallbackKey: 'payments');
+    final apiDefaultAmount = readDouble(data, const ['default_amount']) > 0
+        ? readDouble(data, const ['default_amount'])
+        : readDouble(root, const ['default_amount']);
+    final resolvedDefaultAmount = [
+      fallbackDuesAmount,
+      apiDefaultAmount,
+      ?await _readConfigDuesDefaultAmount(),
+      ?await getDefaultDuesAmount(),
+    ].reduce((a, b) => a > b ? a : b);
+
     return {
       'hasMember': data['has_member'] ?? root['has_member'] ?? false,
       'payments': payments.map(DuesPayment.fromJson).toList(),
       'summary': _readNestedMap(root, key: 'summary') != null
           ? DuesSummary.fromJson(_readNestedMap(root, key: 'summary')!)
           : null,
-      'defaultAmount':
-          (data['default_amount'] as num?)?.toDouble() ??
-          (root['default_amount'] as num?)?.toDouble() ??
-          0.0,
+      'defaultAmount': resolvedDefaultAmount,
     };
+  }
+
+  Future<double?> getDefaultDuesAmount() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/finance/categories',
+        queryParameters: {'type': 'income'},
+      );
+      final categories = readList(response.data ?? {}, 'categories');
+      for (final category in categories) {
+        final name = readString(category, const ['name']).toLowerCase();
+        if (name.contains('iuran') && name.contains('anggota')) {
+          final amount = readDouble(category, const ['default_amount']);
+          if (amount > 0) return amount;
+        }
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
+  Future<double?> _readConfigDuesDefaultAmount() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>('/config');
+      final root = response.data ?? <String, dynamic>{};
+      final data = _readDataMap(root);
+      for (final source in [
+        data,
+        root,
+        readMap(data, 'dues'),
+        readMap(root, 'dues'),
+      ]) {
+        final amount = readDouble(source, const [
+          'default_amount',
+          'dues_default_amount',
+          'monthly_dues_amount',
+        ]);
+        if (amount > 0) return amount;
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
   }
 
   Future<Map<String, dynamic>> getAdminDues({

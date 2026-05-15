@@ -3,9 +3,9 @@ import '../../../../core/api/json_read.dart';
 class AdminDashboardModel {
   const AdminDashboardModel({
     required this.totalMembers,
-    required this.totalDuesThisMonth,
+    required this.balance,
     required this.totalAspirations,
-    required this.totalLetters,
+    required this.totalInboxLetters,
     required this.pendingLedgers,
     required this.pendingOnboarding,
     required this.pendingUpdates,
@@ -14,9 +14,9 @@ class AdminDashboardModel {
   });
 
   final int totalMembers;
-  final double totalDuesThisMonth;
+  final double balance;
   final int totalAspirations;
-  final int totalLetters;
+  final int totalInboxLetters;
   final int pendingLedgers;
   final int pendingOnboarding;
   final int pendingUpdates;
@@ -33,6 +33,9 @@ class AdminMemberModel {
     this.role,
     this.unitName,
     this.status,
+    this.phone,
+    this.position,
+    this.joinedAt,
   });
 
   final int id;
@@ -42,6 +45,9 @@ class AdminMemberModel {
   final String? role;
   final String? unitName;
   final String? status;
+  final String? phone;
+  final String? position;
+  final String? joinedAt;
 
   factory AdminMemberModel.fromJson(Map<String, dynamic> json) {
     String? nullIfEmpty(String v) => v.isEmpty ? null : v;
@@ -49,6 +55,9 @@ class AdminMemberModel {
         ? readMap(json, 'organization_unit')
         : readMap(json, 'unit');
     final role = readMap(json, 'role');
+    final position = readMap(json, 'position').isNotEmpty
+        ? readMap(json, 'position')
+        : readMap(json, 'union_position');
 
     return AdminMemberModel(
       id: readInt(json, const ['id']),
@@ -69,6 +78,29 @@ class AdminMemberModel {
         ], fallback: ''),
       ),
       status: nullIfEmpty(readString(json, const ['status'], fallback: '')),
+      phone: nullIfEmpty(
+        readString(json, const [
+          'phone',
+          'phone_number',
+          'mobile',
+          'whatsapp',
+        ], fallback: ''),
+      ),
+      position: nullIfEmpty(
+        readString(position.isNotEmpty ? position : json, const [
+          'name',
+          'position',
+          'position_name',
+        ], fallback: ''),
+      ),
+      joinedAt: nullIfEmpty(
+        readString(json, const [
+          'joined_at',
+          'join_date',
+          'registered_at',
+          'created_at',
+        ], fallback: ''),
+      ),
     );
   }
 }

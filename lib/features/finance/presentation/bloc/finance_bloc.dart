@@ -45,7 +45,7 @@ class FinanceBloc extends Bloc<FinanceEvent, FinanceState> {
     try {
       final initialDashboard = await _repository.getDashboard();
       final units = await _safeGetUnits(initialDashboard);
-      final defaultUnitId = _defaultFinanceUnitId(initialDashboard, units);
+      final defaultUnitId = _defaultFinanceUnitId(initialDashboard);
       final dashboard = defaultUnitId == null
           ? initialDashboard
           : await _safeGetDashboard(unitId: defaultUnitId);
@@ -92,16 +92,8 @@ class FinanceBloc extends Bloc<FinanceEvent, FinanceState> {
     }
   }
 
-  int? _defaultFinanceUnitId(
-    FinanceDashboardModel dashboard,
-    FinanceUnitsResponse units,
-  ) {
+  int? _defaultFinanceUnitId(FinanceDashboardModel dashboard) {
     final role = dashboard.userRole.normalizedRole;
-
-    if (role == 'bendahara_pusat') {
-      final pusatUnits = units.units.where((unit) => unit.isPusat);
-      if (pusatUnits.isNotEmpty) return pusatUnits.first.id;
-    }
 
     if (role == 'bendahara' &&
         dashboard.userRole.unitId != null &&
@@ -155,10 +147,7 @@ class FinanceBloc extends Bloc<FinanceEvent, FinanceState> {
         status: event.filters['status'] as String?,
         unitId: unitId,
       );
-      final scopedDashboard =
-          unitChanged &&
-              unitId != null &&
-              _sameSummary(dashboard.summary, currentState.dashboard.summary)
+      final scopedDashboard = unitChanged && unitId != null
           ? await _dashboardFromVisibleUnitTransactions(dashboard, unitId)
           : dashboard;
 
@@ -183,25 +172,28 @@ class FinanceBloc extends Bloc<FinanceEvent, FinanceState> {
     return null;
   }
 
-  bool _sameSummary(DashboardSummary a, DashboardSummary b) {
-    return a.balance == b.balance &&
-        a.incomeThisMonth == b.incomeThisMonth &&
-        a.expenseThisMonth == b.expenseThisMonth &&
-        a.pendingCount == b.pendingCount;
-  }
-
   Future<FinanceDashboardModel> _dashboardFromVisibleUnitTransactions(
     FinanceDashboardModel dashboard,
     int unitId,
   ) async {
     try {
-      final page = await _repository.getLedgers(
-        page: 1,
-        perPage: 100,
-        unitId: unitId,
-      );
+      final items = <FinanceLedgerModel>[];
+      var pageNumber = 1;
+      var hasMore = true;
+
+      while (hasMore && pageNumber <= 100) {
+        final page = await _repository.getLedgers(
+          page: pageNumber,
+          perPage: 100,
+          unitId: unitId,
+        );
+        items.addAll(page.items);
+        hasMore = page.hasMore;
+        pageNumber += 1;
+      }
+
       return FinanceDashboardModel(
-        summary: _summaryFromLedgers(page.items),
+        summary: _summaryFromLedgers(items),
         recentTransactions: dashboard.recentTransactions,
         userRole: dashboard.userRole,
       );

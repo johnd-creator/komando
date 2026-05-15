@@ -66,71 +66,81 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           return RefreshIndicator(
             onRefresh: () async => _reload(),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              padding: const EdgeInsets.only(bottom: 24),
               children: [
                 const _AdminHeader(),
                 const SizedBox(height: 18),
-                _SummaryPanel(
-                  children: [
-                    _StatTile(
-                      label: 'Anggota',
-                      value: d.totalMembers.toString(),
-                      icon: Icons.people_alt_rounded,
-                      color: const Color(0xFF126ED3),
-                    ),
-                    _StatTile(
-                      label: 'Saldo Uang',
-                      value: 'Rp ${_fmt(d.totalDuesThisMonth)}',
-                      icon: Icons.account_balance_wallet_rounded,
-                      color: const Color(0xFF159B56),
-                    ),
-                    _StatTile(
-                      label: 'Aspirasi',
-                      value: d.totalAspirations.toString(),
-                      icon: Icons.forum_rounded,
-                      color: const Color(0xFF5A3FD6),
-                    ),
-                    _StatTile(
-                      label: 'Surat',
-                      value: d.totalLetters.toString(),
-                      icon: Icons.mail_rounded,
-                      color: const Color(0xFFE18A00),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _SummaryPanel(
+                    children: [
+                      _StatTile(
+                        label: 'Anggota',
+                        value: d.totalMembers.toString(),
+                        icon: Icons.people_alt_rounded,
+                        color: const Color(0xFF126ED3),
+                      ),
+                      _StatTile(
+                        label: 'Saldo Uang',
+                        value: 'Rp ${_fmt(d.balance)}',
+                        icon: Icons.account_balance_wallet_rounded,
+                        color: const Color(0xFF159B56),
+                      ),
+                      _StatTile(
+                        label: 'Aspirasi',
+                        value: d.totalAspirations.toString(),
+                        icon: Icons.forum_rounded,
+                        color: const Color(0xFF5A3FD6),
+                      ),
+                      _StatTile(
+                        label: 'Surat Masuk',
+                        value: d.totalInboxLetters.toString(),
+                        icon: Icons.mail_rounded,
+                        color: const Color(0xFFE18A00),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 14),
-                _ApprovalPanel(
-                  pendingLedgers: d.pendingLedgers,
-                  pendingOnboarding: d.pendingOnboarding,
-                  pendingUpdates: d.pendingUpdates,
-                  pendingMutations: d.pendingMutations,
-                  onLedgerTap: () => context.push(AppRoutes.keuangan),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _ApprovalPanel(
+                    pendingLedgers: d.pendingLedgers,
+                    pendingOnboarding: d.pendingOnboarding,
+                    pendingUpdates: d.pendingUpdates,
+                    pendingMutations: d.pendingMutations,
+                    onLedgerTap: () => context.push(AppRoutes.keuangan),
+                  ),
                 ),
                 const SizedBox(height: 14),
-                _MenuPanel(
-                  children: [
-                    _AdminMenuTile(
-                      title: 'Data Anggota',
-                      subtitle: 'Kelola dan cari data anggota.',
-                      icon: Icons.people_alt_rounded,
-                      color: const Color(0xFF126ED3),
-                      onTap: () => context.push(AppRoutes.adminMembers),
-                    ),
-                    _AdminMenuTile(
-                      title: 'Kelola Iuran',
-                      subtitle: 'Checklist dan tagihan iuran bulanan.',
-                      icon: Icons.payments_rounded,
-                      color: const Color(0xFF159B56),
-                      onTap: () => context.push(AppRoutes.adminDues),
-                    ),
-                    _AdminMenuTile(
-                      title: 'Transaksi Keuangan',
-                      subtitle: 'Monitoring pemasukan, pengeluaran, approval.',
-                      icon: Icons.account_balance_wallet_rounded,
-                      color: const Color(0xFF5A3FD6),
-                      onTap: () => context.push(AppRoutes.keuangan),
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _MenuPanel(
+                    children: [
+                      _AdminMenuTile(
+                        title: 'Data Anggota',
+                        subtitle: 'Kelola dan cari data anggota.',
+                        icon: Icons.people_alt_rounded,
+                        color: const Color(0xFF126ED3),
+                        onTap: () => context.push(AppRoutes.adminMembers),
+                      ),
+                      _AdminMenuTile(
+                        title: 'Kelola Iuran',
+                        subtitle: 'Checklist dan tagihan iuran bulanan.',
+                        icon: Icons.payments_rounded,
+                        color: const Color(0xFF159B56),
+                        onTap: () => context.push(AppRoutes.adminDues),
+                      ),
+                      _AdminMenuTile(
+                        title: 'Transaksi Keuangan',
+                        subtitle:
+                            'Monitoring pemasukan, pengeluaran, approval.',
+                        icon: Icons.account_balance_wallet_rounded,
+                        color: const Color(0xFF5A3FD6),
+                        onTap: () => context.push(AppRoutes.keuangan),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
